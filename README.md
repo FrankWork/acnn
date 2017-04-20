@@ -7,5 +7,5 @@ Code for the paper: [Relation Classification via Multi-Level Attention CNNs](htt
 
 
 ```
-unzip SemEval2010_task8_all_data.zip -d data/
+unzip SemEval2010_task8_all_data.zip
 ```
