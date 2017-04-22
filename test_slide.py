@@ -13,9 +13,6 @@ for i in range(k, len(s)-k):
 print('*' * 80)
 
 def slide(i):
-  buf = []
-  for j in range(i-k, i+k+1):
-    buf.append(s[j])
-  return buf
+  return list(s[i-k:i+k+1])
 
 print(list(map(slide, range(k, len(s)-k))))
