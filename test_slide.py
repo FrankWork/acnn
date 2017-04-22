@@ -1,17 +1,21 @@
-s = 'a b c d e'.split()
-k = (3-1)//2
+import numpy as np
 
-for i in range(len(s)):
+k = 1
+
+s = [1,2,3,4,5]
+s = np.pad(s, (k), 'constant', constant_values=(0))
+for i in range(k, len(s)-k):
   buf = ''
-  if i-k < 0:
-    for j in range(k):
-      buf+='0'
-  else:
-    buf+=s[i-k]
-  buf+=s[i]
-  if i+k>=len(s):
-    for j in range(k):
-      buf+='0'
-  else:
-    buf+=s[i+k]
+  for j in range(i-k, i+k+1):
+    buf += str(s[j])
   print(buf)
+
+print('*' * 80)
+
+def slide(i):
+  buf = []
+  for j in range(i-k, i+k+1):
+    buf.append(s[j])
+  return buf
+
+print(list(map(slide, range(k, len(s)-k))))
