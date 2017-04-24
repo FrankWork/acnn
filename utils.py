@@ -1,7 +1,6 @@
 import numpy as np
 import logging
 from collections import Counter
-import config
 
 def load_data(file):
   sentences = []
@@ -30,7 +29,9 @@ def build_dict(sentences):
   # leave 0 to PAD
   return {w[0]: index + 1 for (index, w) in enumerate(ls)}
 
-def load_embedding(emb_file, emb_vocab, word_dict):
+def load_embedding(config, word_dict):
+  emb_file = config.embedding_file
+  emb_vocab = config.embedding_vocab
 
   vocab = {}
   with open(emb_vocab, 'r') as f:
@@ -112,6 +113,29 @@ def pos(x):
   if x > 60:
       return 122
 
+def batch_iter(data, batch_size, num_epoch, shuffle=True):
+    """
+    Generates batches for the NN input feed.
+
+    Returns a generator (yield) as the datasets are expected to be huge.
+    """
+    data = np.array(data)
+    data_size = len(data)
+
+    batches_per_epoch = data_size // batch_size
+
+    logging.info("Generating batches.. Total # of batches %d" % batches_per_epoch * num_epoch)
+
+    for _ in range(num_epoch):
+      if shuffle:
+        indices = np.random.permutation(np.arange(data_size))
+        shuffled_data = data[indices]
+      else:
+        shuffled_data = data
+      for batch_num in range(batches_per_epoch):
+        start_index = batch_num * batch_size
+        end_index = min((batch_num + 1) * batch_size, data_size)
+        yield shuffled_data[start_index:end_index]
 
 if __name__ == '__main__':
   for item in load_data('data/test.txt'):

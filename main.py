@@ -1,7 +1,8 @@
-import tensorflow as tf
-import numpy as np
 import logging
 import os
+
+import numpy as np
+import tensorflow as tf
 
 import config
 import utils
@@ -12,31 +13,37 @@ class Model(object):
   def __init__(self, embeddings, is_training=True):
     bz = config.batch_size
     ez = config.embedding_size
-
-    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='x')
-    in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='e1')
-    in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='e2')
-    in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='dist1')
-    in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='dist2')
-    in_y = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='dist2')
+    dp = config.pos_embed_size
+    np = config.pos_embed_num
+    
+    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_x')
+    in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e1')
+    in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
+    in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist1')
+    in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist2')
+    in_y = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_y')
     
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
     pos_embed = tf.get_variable(initializer=tf.truncated_normal_initializer(),
-                              shape=[],dtype=tf.float32,name='pos_embed')
+                          shape=[np, dp],dtype=tf.float32,name='pos_embed')
     
-    x = tf.nn.embedding_lookup(embed, in_x, name='x') # bz,len,ez
+    x_emb = tf.nn.embedding_lookup(embed, in_x, name='x') # bz,len,ez
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')#
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')
     dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, len, pz
     dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, pz
 
-    x = tf.concat([x, dist1, dist2], 2) # bz, len, ez+2*pz
+    x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, ez+2*pz
 
 
+def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
+  start_time = time.time()
+  for batch in batch_iter:
+    print(len(list(zip(*batch))))
+    break
 
-
-    (sents_vec, relations, e1_pos, e2_pos, dist1, dist2)
-
+  return 0.
+  
 
 def init():
   path = config.data_path
@@ -65,8 +72,7 @@ def init():
   word_dict = utils.build_dict(train_data[0] + test_data[0])
   logging.info('total words: %d' % len(word_dict))
 
-  embeddings = utils.load_embedding(config.embedding_file, config.embedding_vocab,
-                                    word_dict)
+  embeddings = utils.load_embedding(config, word_dict)
 
   # Log parameters
   flags = config.__dict__['__flags']
@@ -77,16 +83,50 @@ def init():
 
   # vectorize data
   # vec = (sents_vec, relations, e1_vec, e2_vec, dist1, dist2)
-  # train_vec = utils.vectorize(train_data, word_dict)
+  train_vec = utils.vectorize(train_data, word_dict)
   test_vec = utils.vectorize(test_data, word_dict)
 
-  return embeddings, train_vec, test_vec
+  bz = config.batch_size
+  ne = config.num_epoches
+  test_iter = utils.batch_iter(list(zip(*test_vec)), bz, ne, shuffle=False)
+  train_iter = utils.batch_iter(list(zip(*train_vec)), bz, ne, shuffle=False)
+
+  return embeddings, train_iter, test_iter
 
   
 def main(_):
-  embeddings, train_vec, test_vec = init()
-  
-  
+  embeddings, train_iter, test_iter = init()
+
+  with tf.Graph().as_default():
+    with tf.name_scope("Train"):
+      with tf.variable_scope("Model", reuse=None):
+        m_train = Model(embeddings, is_training=True)
+      # tf.summary.scalar("Training_Loss", m_train.loss)
+      # tf.summary.scalar("Training_acc", m_train.acc)
+
+    with tf.name_scope("Valid"):
+      with tf.variable_scope("Model", reuse=True):
+        m_test = Model(embeddings, is_training=False)
+      # tf.summary.scalar("test_acc", m_test.acc)
+    
+    sv = tf.train.Supervisor(logdir=config.save_path)
+    with sv.managed_session() as session:
+      if config.test_only:
+        test_acc = run_epoch(session, m_test, test_iter, is_training=False)
+        print("test acc: %.3f" % test_acc)
+      else:
+        for epoch in range(config.num_epoches):
+          # lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
+          # m.assign_lr(session, config.learning_rate * lr_decay)
+
+          train_acc = run_epoch(session, m_train, train_iter)
+          logging.info("Epoch: %d Train acc: %.2f%%" % (epoch + 1, train_acc*100))
+          test_acc = run_epoch(session, m_test, test_iter, is_training=False)
+          logging.info("Epoch: %d test acc: %.2f%%" % (epoch + 1, test_acc*100))
+        # test_acc = run_epoch(session, m_test)
+        if config.save_path:
+          sv.saver.save(session, config.save_path, global_step=sv.global_step)
+
 
 
 

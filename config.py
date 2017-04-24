@@ -22,14 +22,14 @@ tf.app.flags.DEFINE_string("pad_word", "<PAD>", "save model here")
 
 
 # Model details
-tf.app.flags.DEFINE_integer("hidden_size", "128", "Hidden size of RNN units")
-tf.app.flags.DEFINE_integer("num_layers", "1", "Number of RNN layers")
+tf.app.flags.DEFINE_integer("pos_embed_num", "123", "position embedding number")
+tf.app.flags.DEFINE_integer("pos_embed_size", "25", "position embedding size")
+# tf.app.flags.DEFINE_integer("embeddings_size", "128", "Hidden size of RNN units")
+
 
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", "32", "Batch size")
-tf.app.flags.DEFINE_integer("num_epoches", 5, "Number of epoches")
-tf.app.flags.DEFINE_integer("eval_iter", "100", 
-                            "Evaluation on dev set after K updates")
+tf.app.flags.DEFINE_integer("num_epoches", 1, "Number of epoches")
 tf.app.flags.DEFINE_float("dropout_rate", 0.8, "Dropout rate.")
 tf.app.flags.DEFINE_float("learning_rate", 0.1, "Learning rate.")
 tf.app.flags.DEFINE_float("grad_clipping", 10., "Gradient clipping.")
