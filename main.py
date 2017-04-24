@@ -77,16 +77,17 @@ def init():
 
   # vectorize data
   # vec = (sents_vec, relations, e1_vec, e2_vec, dist1, dist2)
-  train_vec = utils.vectorize(train_data, word_dict)
+  # train_vec = utils.vectorize(train_data, word_dict)
   test_vec = utils.vectorize(test_data, word_dict)
-  
+
   return embeddings, train_vec, test_vec
 
   
 def main(_):
   embeddings, train_vec, test_vec = init()
-  sents_vec, relations, e1_vec, e2_vec, dist1, dist2 = test_vec
   
+  
+
 
 
 

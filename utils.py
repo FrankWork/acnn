@@ -68,28 +68,53 @@ def vectorize(data, word_dict):
   for sent, pos1, pos2 in zip(sentences, e1_pos, e2_pos):
     vec = [word_dict[w] if w in word_dict else 0 for w in sent]
     sents_vec.append(vec)
-    e1_vec.append(vec[pos1[0] : pos1[1]+1])
-    e2_vec.append(vec[pos2[0] : pos2[1]+1])
+    
+    # # log e1 and e2 if e1 or e2 is a phrase
+    # if pos1[0]!=pos1[1] or pos2[0]!=pos2[1]:
+    #   s_e1 = ''
+    #   for w in sent[pos1[0] : pos1[1]+1]:
+    #     s_e1 += w + ' '
+    #   s_e2 = ''
+    #   for w in sent[pos2[0] : pos2[1]+1]:
+    #     s_e2 += w + ' '
+    #   logging.debug("%s - %s" % (s_e1, s_e2))
+
+    # # the entire e1 and e2 phrase
+    # e1_vec.append(vec[pos1[0] : pos1[1]+1])
+    # e2_vec.append(vec[pos2[0] : pos2[1]+1])
+
+    # last word of e1 and e2
+    e1_vec.append(vec[pos1[1]])
+    e2_vec.append(vec[pos2[1]])
+
 
   # compute relative distance
   dist1 = []
   dist2 = []
 
-  def pos(x):
-    if x < -60:
-        return 0
-    if x >= -60 and x <= 60:
-        return x + 61
-    if x > 60:
-        return 122
+  
 
   for sent, p1, p2 in zip(sentences, e1_pos, e2_pos):
-    dist1.append([pos(p1[0]-idx) for idx, _ in enumerate(sent)])
-    dist2.append([pos(p2[0]-idx) for idx, _ in enumerate(sent)])
+    # current word position - last word position of e1 or e2
+    dist1.append([pos(idx-p1[1]) for idx, _ in enumerate(sent)])
+    dist2.append([pos(idx-p2[1]) for idx, _ in enumerate(sent)])
 
   return sents_vec, relations, e1_vec, e2_vec, dist1, dist2
+
+def pos(x):
+  '''
+  map the relative distance between [0, 123)
+  '''
+  if x < -60:
+      return 0
+  if x >= -60 and x <= 60:
+      return x + 61
+  if x > 60:
+      return 122
 
 
 if __name__ == '__main__':
   for item in load_data('data/test.txt'):
     print(item)
+
+
