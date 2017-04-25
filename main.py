@@ -20,18 +20,18 @@ class Model(object):
     k = config.slide_window
     
 
-    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x')
+    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
     in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist1')
     in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist2')
-    in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y')
+    in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y') # relations
     
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
+    initializer = tf.truncated_normal_initializer()
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
-    pos_embed = tf.get_variable(initializer=tf.truncated_normal_initializer(),
-                          shape=[np, dp],dtype=tf.float32,name='pos_embed')
+    pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='pos_embed')
     
     hk = (k-1)//2 # half of the slide window size
     def slide_window(x):
@@ -45,15 +45,18 @@ class Model(object):
 
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# dw
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# dw
-    x_emb = tf.nn.embedding_lookup(embed, sw_x, name='x_emb') # bz,n,k,dw
+    x = tf.nn.embedding_lookup(embed, in_x, name='x') # bz,n,dw
+    x_k = tf.nn.embedding_lookup(embed, sw_x, name='x_k') # bz,n,k,dw
     dist1 = tf.nn.embedding_lookup(pos_embed, sw_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos_embed, sw_dist2, name='dist2')# bz, n, k,dp
     
-
-    x = tf.concat([x_emb, dist1, dist2], -1) # bz, n, k, dw+2*dp
-    x = tf.reshape(x, [bz, n, k*(dw+2*dp)])
-    self.x = in_x
-    self.sw_x = x
+    r = tf.concat([x_k, dist1, dist2], -1) # bz, n, k, dw+2*dp
+    r = tf.reshape(r, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
+    
+    # input attention
+    mask_eye = tf.eye(n,n)
+    A1 = tf.get_variable(initializer=initializer,shape=[n, n],name='A1')
+    A2 = tf.get_variable(initializer=initializer,shape=[n, n],name='A2')
 
 
 
