@@ -1,8 +1,9 @@
-import logging
-import os
-
 import numpy as np
 import tensorflow as tf
+import logging
+import os
+import time
+
 
 import config
 import utils
@@ -21,7 +22,9 @@ class Model(object):
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
     in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist1')
     in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist2')
-    in_y = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_y')
+    in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y')
+    
+    self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
     pos_embed = tf.get_variable(initializer=tf.truncated_normal_initializer(),
@@ -33,14 +36,23 @@ class Model(object):
     dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, len, pz
     dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, pz
 
-    x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, ez+2*pz
+    self.x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, ez+2*pz
 
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()
   for batch in batch_iter:
-    print(len(list(zip(*batch))))
-    break
+    batch = (x for x in zip(*batch))
+    sents, relations, e1, e2, dist1, dist2 = batch
+    # sents is a list of np.ndarray, convert it to a single np.ndarray
+    sents = np.vstack(sents)
+
+    in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
+    feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
+                 in_dist2: dist2, in_y: relations}
+    x = session.run(model.x, feed_dict=feed_dict)
+    print(x.shape)
+    exit()
 
   return 0.
   
@@ -123,7 +135,6 @@ def main(_):
           logging.info("Epoch: %d Train acc: %.2f%%" % (epoch + 1, train_acc*100))
           test_acc = run_epoch(session, m_test, test_iter, is_training=False)
           logging.info("Epoch: %d test acc: %.2f%%" % (epoch + 1, test_acc*100))
-        # test_acc = run_epoch(session, m_test)
         if config.save_path:
           sv.saver.save(session, config.save_path, global_step=sv.global_step)
 

@@ -63,12 +63,20 @@ def vectorize(data, word_dict):
   sentences, relations, e1_pos, e2_pos = data
 
   # replace word with word-id
-  sents_vec = []
+  # sents_vec = []
   e1_vec = []
   e2_vec = []
-  for sent, pos1, pos2 in zip(sentences, e1_pos, e2_pos):
+
+  max_len = len(max(sentences, key=lambda x:len(x)))
+  num_data = len(sentences)
+  sents_vec = np.zeros((num_data, max_len), dtype=int)
+
+  logging.debug('data shape: (%d, %d)' % (num_data, max_len))
+  
+
+  for idx, (sent, pos1, pos2) in enumerate(zip(sentences, e1_pos, e2_pos)):
     vec = [word_dict[w] if w in word_dict else 0 for w in sent]
-    sents_vec.append(vec)
+    sents_vec[idx, :len(vec)] = vec
     
     # # log e1 and e2 if e1 or e2 is a phrase
     # if pos1[0]!=pos1[1] or pos2[0]!=pos2[1]:
@@ -95,11 +103,11 @@ def vectorize(data, word_dict):
 
   
 
-  for sent, p1, p2 in zip(sentences, e1_pos, e2_pos):
+  for sent, p1, p2 in zip(sents_vec, e1_pos, e2_pos):
     # current word position - last word position of e1 or e2
     dist1.append([pos(idx-p1[1]) for idx, _ in enumerate(sent)])
     dist2.append([pos(idx-p2[1]) for idx, _ in enumerate(sent)])
-
+  
   return sents_vec, relations, e1_vec, e2_vec, dist1, dist2
 
 def pos(x):
