@@ -13,7 +13,7 @@ config = config.FLAGS
 class Model(object):
   def __init__(self, embeddings, is_training=True):
     bz = config.batch_size
-    ez = config.embedding_size
+    dw = config.embedding_size
     dp = config.pos_embed_size
     np = config.pos_embed_num
     
@@ -30,14 +30,17 @@ class Model(object):
     pos_embed = tf.get_variable(initializer=tf.truncated_normal_initializer(),
                           shape=[np, dp],dtype=tf.float32,name='pos_embed')
     
-    x_emb = tf.nn.embedding_lookup(embed, in_x, name='x') # bz,len,ez
-    e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')#
-    e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')
-    dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, len, pz
-    dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, pz
+    x_emb = tf.nn.embedding_lookup(embed, in_x, name='x_emb') # bz,len,dw
+    e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# dw
+    e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# dw
+    dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, len, dp
+    dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, dp
 
-    self.x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, ez+2*pz
+    x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, dw+2*dp
+    def slide(i):
+      return list(s[i-k:i+k+1])
 
+    print(list(map(slide, range(k, len(s)-k))))
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()
