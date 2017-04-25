@@ -59,7 +59,7 @@ def load_embedding(config, word_dict):
   f.close()
   return embeddings.astype(np.float32)
 
-def vectorize(data, word_dict):
+def vectorize(data, word_dict, max_len):
   sentences, relations, e1_pos, e2_pos = data
 
   # replace word with word-id
@@ -67,7 +67,7 @@ def vectorize(data, word_dict):
   e1_vec = []
   e2_vec = []
 
-  max_len = len(max(sentences, key=lambda x:len(x)))
+  
   num_data = len(sentences)
   sents_vec = np.zeros((num_data, max_len), dtype=int)
 
@@ -104,6 +104,7 @@ def vectorize(data, word_dict):
   
 
   for sent, p1, p2 in zip(sents_vec, e1_pos, e2_pos):
+    #FIXME: padding value?
     # current word position - last word position of e1 or e2
     dist1.append([pos(idx-p1[1]) for idx, _ in enumerate(sent)])
     dist2.append([pos(idx-p2[1]) for idx, _ in enumerate(sent)])

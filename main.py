@@ -16,14 +16,15 @@ class Model(object):
     dw = config.embedding_size
     dp = config.pos_embed_size
     np = config.pos_embed_num
+    n = config.max_len
     k = config.slide_window
-    k = (k-1)//2 # half of the slide window size
+    
 
-    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_x')
+    in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x')
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
-    in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist1')
-    in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_dist2')
+    in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist1')
+    in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist2')
     in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y')
     
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
@@ -32,21 +33,29 @@ class Model(object):
     pos_embed = tf.get_variable(initializer=tf.truncated_normal_initializer(),
                           shape=[np, dp],dtype=tf.float32,name='pos_embed')
     
-    x_emb = tf.nn.embedding_lookup(embed, in_x, name='x_emb') # bz,len,dw
+    hk = (k-1)//2 # half of the slide window size
+    def slide_window(x):
+      sw_x = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*hk
+      sw_x = tf.map_fn(lambda i: sw_x[:, i-hk:i+hk+1], tf.range(hk, n+hk), dtype=tf.int32)
+      return tf.stack(tf.unstack(sw_x), axis=1)
+    
+    sw_x = slide_window(in_x)         # bz, n, k
+    sw_dist1 = slide_window(in_dist1) # bz, n, k
+    sw_dist2 = slide_window(in_dist2) # bz, n, k
+
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# dw
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# dw
-    dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, len, dp
-    dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, dp
-
-    x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, dw+2*dp
-
-    x = tf.pad()
-    def slide(i):
-      return list(s[i-k:i+k+1])
+    x_emb = tf.nn.embedding_lookup(embed, sw_x, name='x_emb') # bz,n,k,dw
+    dist1 = tf.nn.embedding_lookup(pos_embed, sw_dist1, name='dist1')#bz, n, k,dp
+    dist2 = tf.nn.embedding_lookup(pos_embed, sw_dist2, name='dist2')# bz, n, k,dp
     
-    # slide window
-    x_sw
-    print(list(map(slide, range(k, len(s)-k))))
+
+    x = tf.concat([x_emb, dist1, dist2], -1) # bz, n, k, dw+2*dp
+    x = tf.reshape(x, [bz, n, k*(dw+2*dp)])
+    self.x = in_x
+    self.sw_x = x
+
+
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()
@@ -59,8 +68,12 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
-    x = session.run(model.x, feed_dict=feed_dict)
+    x, xs = session.run([model.x, model.sw_x], feed_dict=feed_dict)
     print(x.shape)
+    print('*' * 10)
+    print(xs.shape)
+    print('*' * 10)
+  
     exit()
 
   return 0.
@@ -104,8 +117,13 @@ def init():
 
   # vectorize data
   # vec = (sents_vec, relations, e1_vec, e2_vec, dist1, dist2)
-  train_vec = utils.vectorize(train_data, word_dict)
-  test_vec = utils.vectorize(test_data, word_dict)
+  max_len_train = len(max(train_data[0], key=lambda x:len(x)))
+  max_len_test = len(max(test_data[0], key=lambda x:len(x)))
+  max_len = max(max_len_train, max_len_test)
+  config.max_len = max_len
+
+  train_vec = utils.vectorize(train_data, word_dict, max_len)
+  test_vec = utils.vectorize(test_data, word_dict, max_len)
 
   bz = config.batch_size
   ne = config.num_epoches
