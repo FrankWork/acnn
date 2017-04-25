@@ -16,7 +16,9 @@ class Model(object):
     dw = config.embedding_size
     dp = config.pos_embed_size
     np = config.pos_embed_num
-    
+    k = config.slide_window
+    k = (k-1)//2 # half of the slide window size
+
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,None], name='in_x')
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
@@ -37,9 +39,13 @@ class Model(object):
     dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, len, dp
 
     x = tf.concat([x_emb, dist1, dist2], 2) # bz, len, dw+2*dp
+
+    x = tf.pad()
     def slide(i):
       return list(s[i-k:i+k+1])
-
+    
+    # slide window
+    x_sw
     print(list(map(slide, range(k, len(s)-k))))
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):

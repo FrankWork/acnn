@@ -13,6 +13,6 @@ for i in range(k, len(s)-k):
 print('*' * 80)
 
 def slide(i):
-  return list(s[i-k:i+k+1])
+  return s[i-k:i+k+1] 
 
 print(list(map(slide, range(k, len(s)-k))))
