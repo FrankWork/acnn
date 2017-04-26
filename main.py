@@ -18,7 +18,8 @@ class Model(object):
     np = config.pos_embed_num
     n = config.max_len
     k = config.slide_window
-    nf = config.num_filters
+    dc = config.num_filters
+    nr = config.classnum # number of relations
     
     # input
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
@@ -32,9 +33,10 @@ class Model(object):
     
     # embeddings
     initializer = tf.truncated_normal_initializer()
-    embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
-    pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='pos_embed')
-    
+    embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
+    pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position_embed')
+    rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
+
     # slide window
     hk = (k-1)//2 # half of the slide window size
     def slide_window(x):
@@ -81,13 +83,31 @@ class Model(object):
     # x: (batch_size, max_len, embdding_size, 1)
     # w: (filter_size, embdding_size, 1, num_filters)
     d = dw+2*dp
-    w = tf.get_variable(initializer=initializer,shape=[1, k*d, 1, nf],name='weight')
-    b = tf.get_variable(initializer=initializer,shape=[nf],name='bias')
+    w = tf.get_variable(initializer=initializer,shape=[1, k*d, 1, dc],name='weight')
+    b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
     conv = tf.nn.conv2d(tf.reshape(r, [bz,n,k*d,1]), w, strides=[1,1,k*d,1],padding="SAME")
     self.conv = conv 
-    R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, nf
+    R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
 
     # attention pooling
+    U = tf.get_variable(initializer=initializer,shape=[dc,dc],name='U')
+    
+    # batch matmul
+    # G = R * U * WL
+    # R: (bz, n, dc)
+    # U: (dc, dc)
+    # WL:(dc, nr)
+    G = tf.matmul(# (bz*n,dc), (dc, dc) => (bz*n, dc)
+      tf.reshape(R, [bz*n, dc]), U
+    )
+    G = tf.matmul(# (bz*n, dc), (dc, nr) => (bz*n, nr)
+      G, tf.transpose(rel_embed)
+    ) 
+    G = tf.reshape(G, [bz, n, nr])
+    AP = tf.nn.softmax(G)# attention pooling tensor
+
+    # predict
+    wo = max(R*AP)
     
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):

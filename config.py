@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_integer("pos_embed_size", "25", "position embedding size")
 tf.app.flags.DEFINE_integer("slide_window", "3", "Slide window size")
 tf.app.flags.DEFINE_integer("num_filters", "100", 
                             "How many features a convolution op have to output")
-
+tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", "32", "Batch size")
