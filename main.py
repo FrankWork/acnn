@@ -18,7 +18,7 @@ class Model(object):
     np = config.pos_embed_num
     n = config.max_len
     k = config.slide_window
-    nf = config.num_filters # TODO
+    nf = config.num_filters
     
     # input
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
@@ -81,12 +81,14 @@ class Model(object):
     # x: (batch_size, max_len, embdding_size, 1)
     # w: (filter_size, embdding_size, 1, num_filters)
     d = dw+2*dp
-    
-    # shape=[filter_size, embedding_size, 1, num_filters] filter_size = slide_window size
     w = tf.get_variable(initializer=initializer,shape=[1, k*d, 1, nf],name='weight')
     b = tf.get_variable(initializer=initializer,shape=[nf],name='bias')
     conv = tf.nn.conv2d(tf.reshape(r, [bz,n,k*d,1]), w, strides=[1,1,k*d,1],padding="SAME")
-    self.conv = conv
+    self.conv = conv 
+    R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, nf
+
+    # attention pooling
+    
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()

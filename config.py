@@ -25,6 +25,8 @@ tf.app.flags.DEFINE_string("pad_word", "<PAD>", "save model here")
 tf.app.flags.DEFINE_integer("pos_embed_num", "123", "position embedding number")
 tf.app.flags.DEFINE_integer("pos_embed_size", "25", "position embedding size")
 tf.app.flags.DEFINE_integer("slide_window", "3", "Slide window size")
+tf.app.flags.DEFINE_integer("num_filters", "100", 
+                            "How many features a convolution op have to output")
 
 
 # Optimization details
