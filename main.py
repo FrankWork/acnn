@@ -33,6 +33,7 @@ class Model(object):
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
     pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='pos_embed')
     
+    # slide window
     hk = (k-1)//2 # half of the slide window size
     def slide_window(x):
       sw_x = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*hk
@@ -43,21 +44,39 @@ class Model(object):
     sw_dist1 = slide_window(in_dist1) # bz, n, k
     sw_dist2 = slide_window(in_dist2) # bz, n, k
 
-    e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# dw
-    e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# dw
-    x = tf.nn.embedding_lookup(embed, in_x, name='x') # bz,n,dw
+    e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# bz,dw
+    e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# bz,dw
+    x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
     x_k = tf.nn.embedding_lookup(embed, sw_x, name='x_k') # bz,n,k,dw
     dist1 = tf.nn.embedding_lookup(pos_embed, sw_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos_embed, sw_dist2, name='dist2')# bz, n, k,dp
     
-    r = tf.concat([x_k, dist1, dist2], -1) # bz, n, k, dw+2*dp
-    r = tf.reshape(r, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
+    z = tf.concat([x_k, dist1, dist2], -1) # bz, n, k, dw+2*dp
+    z = tf.reshape(z, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
     
     # input attention
-    mask_eye = tf.eye(n,n)
-    A1 = tf.get_variable(initializer=initializer,shape=[n, n],name='A1')
-    A2 = tf.get_variable(initializer=initializer,shape=[n, n],name='A2')
+    # mask_eye = tf.eye(n,n)
+    # A1 = tf.get_variable(initializer=initializer,shape=[n, n],name='A1')
+    # A2 = tf.get_variable(initializer=initializer,shape=[n, n],name='A2')
 
+    def inner_product(e, x):
+      '''
+      <x, y> = x1y1 + x2y2 + ... + xnyn
+      e:        (bz, dw) => (bz, 1, dw)
+      x:        (bz, n, dw)
+      return :  (bz, n)
+      '''
+      return tf.reduce_sum(
+                tf.multiply(tf.reshape(e1, [bz, 1, dw]), x), 
+                -1
+             )
+
+    alpha1 = tf.nn.softmax(inner_product(e1, x))# bz, n
+    alpha2 = tf.nn.softmax(inner_product(e2, x))# bz, n
+    alpha = (alpha1 + alpha2)/2
+
+    r = tf.multiply(z, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d,   d=(dw+2*dp)
+    self.r = r
 
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
@@ -71,11 +90,10 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
-    x, xs = session.run([model.x, model.sw_x], feed_dict=feed_dict)
+    x, = session.run([model.r], feed_dict=feed_dict)
     print(x.shape)
     print('*' * 10)
-    print(xs.shape)
-    print('*' * 10)
+   
   
     exit()
 
