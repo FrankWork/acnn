@@ -18,8 +18,9 @@ class Model(object):
     np = config.pos_embed_num
     n = config.max_len
     k = config.slide_window
+    nf = config.num_filters # TODO
     
-
+    # input
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_e2')
@@ -29,6 +30,7 @@ class Model(object):
     
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
+    # embeddings
     initializer = tf.truncated_normal_initializer()
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='embed')
     pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='pos_embed')
@@ -44,6 +46,7 @@ class Model(object):
     sw_dist1 = slide_window(in_dist1) # bz, n, k
     sw_dist2 = slide_window(in_dist2) # bz, n, k
 
+    # embdding lookup
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# bz,dw
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# bz,dw
     x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
@@ -55,10 +58,6 @@ class Model(object):
     z = tf.reshape(z, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
     
     # input attention
-    # mask_eye = tf.eye(n,n)
-    # A1 = tf.get_variable(initializer=initializer,shape=[n, n],name='A1')
-    # A2 = tf.get_variable(initializer=initializer,shape=[n, n],name='A2')
-
     def inner_product(e, x):
       '''
       <x, y> = x1y1 + x2y2 + ... + xnyn
@@ -78,6 +77,16 @@ class Model(object):
     r = tf.multiply(z, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d,   d=(dw+2*dp)
     self.r = r
 
+    # convolution
+    # x: (batch_size, max_len, embdding_size, 1)
+    # w: (filter_size, embdding_size, 1, num_filters)
+    d = dw+2*dp
+    
+    # shape=[filter_size, embedding_size, 1, num_filters] filter_size = slide_window size
+    w = tf.get_variable(initializer=initializer,shape=[1, k*d, 1, nf],name='weight')
+    b = tf.get_variable(initializer=initializer,shape=[nf],name='bias')
+    conv = tf.nn.conv2d(tf.reshape(r, [bz,n,k*d,1]), w, strides=[1,1,k*d,1],padding="SAME")
+    self.conv = conv
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()
@@ -90,10 +99,11 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
-    x, = session.run([model.r], feed_dict=feed_dict)
+    x, conv= session.run([model.r, model.conv], feed_dict=feed_dict)
     print(x.shape)
     print('*' * 10)
-   
+    print(conv.shape)
+    print('*' * 10)
   
     exit()
 
