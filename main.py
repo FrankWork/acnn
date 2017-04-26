@@ -55,7 +55,8 @@ class Model(object):
     x_k = tf.nn.embedding_lookup(embed, sw_x, name='x_k') # bz,n,k,dw
     dist1 = tf.nn.embedding_lookup(pos_embed, sw_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos_embed, sw_dist2, name='dist2')# bz, n, k,dp
-    
+    y = tf.tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
+
     z = tf.concat([x_k, dist1, dist2], -1) # bz, n, k, dw+2*dp
     z = tf.reshape(z, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
     
@@ -88,8 +89,10 @@ class Model(object):
     conv = tf.nn.conv2d(tf.reshape(r, [bz,n,k*d,1]), w, strides=[1,1,k*d,1],padding="SAME")
     self.conv = conv 
     R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+    R = tf.reshape(R, [bz, n, dc])
 
     # attention pooling
+
     U = tf.get_variable(initializer=initializer,shape=[dc,dc],name='U')
     
     # batch matmul
@@ -107,7 +110,14 @@ class Model(object):
     AP = tf.nn.softmax(G)# attention pooling tensor
 
     # predict
-    wo = max(R*AP)
+    
+    prob = tf.matmul(
+      tf.transpose(R, perm=[0, 2, 1]), # batch transpose: (bz, n, dc) => (bz,dc,n)
+      AP
+    )# (bz, dc, nr)
+    # prob = tf.transpose(prob, perm=[0,2,1]) # (bz, nr, dc)
+    wo = tf.reduce_max(prob, axis=-1) # (bz, dc)
+    self.wo = wo
     
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
@@ -121,7 +131,7 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
-    x, conv= session.run([model.r, model.conv], feed_dict=feed_dict)
+    x, conv= session.run([model.r, model.wo], feed_dict=feed_dict)
     print(x.shape)
     print('*' * 10)
     print(conv.shape)
