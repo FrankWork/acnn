@@ -118,7 +118,16 @@ class Model(object):
     # prob = tf.transpose(prob, perm=[0,2,1]) # (bz, nr, dc)
     wo = tf.reduce_max(prob, axis=-1) # (bz, dc)
     self.wo = wo
+
+    # train
+    def distance(wo, y):
+      return tf.norm(
+        tf.nn.l2_normalize(wo) - y
+      )
     
+    neg_y = 
+
+    loss = 
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()
