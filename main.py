@@ -119,14 +119,23 @@ class Model(object):
     self.wo = wo
 
     # train
-    def distance(wo, y):
+    def distance(wo, y, axis=None):
       return tf.norm(
-        tf.nn.l2_normalize(wo, dim=-1) - y
+        tf.nn.l2_normalize(wo, dim=-1) - y,
+        axis = axis
       )# a scalar value
     
-    neg_y = distance(wo, rel_embed)#argmax(rel_embed, axis=-1)
-
-
+    neg_dist = distance(
+              tf.tile(tf.expand_dims(wo, axis=1), [1, nr, 1]), # bz, nr, dc
+              rel_embed,# bz, dc
+              axis=-1
+    )# bz, nr
+    mask = tf.one_hot(in_y, nr, on_value=0., off_value=1.)# bz, nr
+    neg_dist = tf.multiply(neg_dist, mask)
+    neg_y = tf.argmax(neg_dist, axis=-1)
+    
+    self.neg_y = neg_y
+    self.in_y = in_y
     loss = neg_y#distance(wo, y) 
     self.loss = loss
 
@@ -141,7 +150,7 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
-    x, conv= session.run([model.r, model.loss], feed_dict=feed_dict)
+    x, conv= session.run([model.neg_dist, model.mask], feed_dict=feed_dict)
     print(x.shape)
     print('*' * 10)
     print(conv.shape)
