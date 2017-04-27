@@ -132,12 +132,17 @@ class Model(object):
     )# bz, nr
     mask = tf.one_hot(in_y, nr, on_value=0., off_value=1.)# bz, nr
     neg_dist = tf.multiply(neg_dist, mask)
-    neg_y = tf.argmax(neg_dist, axis=-1)
-    
-    self.neg_y = neg_y
-    self.in_y = in_y
-    loss = neg_y#distance(wo, y) 
+    neg_y = tf.argmax(neg_dist, axis=-1)# bz, 1
+    neg_y = tf.nn.embedding_lookup(rel_embed, neg_y)# bz, dc
+
+    l2_loss = tf.nn.l2_loss(rel_embed)
+    l2_loss += tf.nn.l2_loss(U)
+    l2_loss += tf.nn.l2_loss(W)
+    l2_loss += tf.nn.l2_loss(b)
+
+    loss = distance(wo, y) + (1-distance(wo, neg_y)) + config.l2_reg_lambda * l2_loss
     self.loss = loss
+    
 
 def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   start_time = time.time()

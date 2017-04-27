@@ -29,11 +29,13 @@ tf.app.flags.DEFINE_integer("num_filters", "100",
                             "How many features a convolution op have to output")
 tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 
+
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", "32", "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 1, "Number of epoches")
 tf.app.flags.DEFINE_float("dropout_rate", 0.8, "Dropout rate.")
 tf.app.flags.DEFINE_float("learning_rate", 0.1, "Learning rate.")
+tf.app.flags.DEFINE_integer("l2_reg_lambda", 0.003, "Number of relations")
 tf.app.flags.DEFINE_float("grad_clipping", 10., "Gradient clipping.")
 
 
