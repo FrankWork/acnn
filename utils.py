@@ -122,7 +122,7 @@ def pos(x):
   if x > 60:
       return 122
 
-def batch_iter(data, batch_size, num_epoch, shuffle=True):
+def batch_iter(data, batch_size, shuffle=True):
     """
     Generates batches for the NN input feed.
 
@@ -133,18 +133,17 @@ def batch_iter(data, batch_size, num_epoch, shuffle=True):
 
     batches_per_epoch = data_size // batch_size
 
-    logging.info("Generating batches.. Total # of batches %d" % batches_per_epoch * num_epoch)
+    # logging.info("Generating batches.. Total # of batches %d" % batches_per_epoch)
 
-    for _ in range(num_epoch):
-      if shuffle:
-        indices = np.random.permutation(np.arange(data_size))
-        shuffled_data = data[indices]
-      else:
-        shuffled_data = data
-      for batch_num in range(batches_per_epoch):
-        start_index = batch_num * batch_size
-        end_index = min((batch_num + 1) * batch_size, data_size)
-        yield shuffled_data[start_index:end_index]
+    if shuffle:
+      indices = np.random.permutation(np.arange(data_size))
+      shuffled_data = data[indices]
+    else:
+      shuffled_data = data
+    for batch_num in range(batches_per_epoch):
+      start_index = batch_num * batch_size
+      end_index = min((batch_num + 1) * batch_size, data_size)
+      yield shuffled_data[start_index:end_index]
 
 if __name__ == '__main__':
   for item in load_data('data/test.txt'):
