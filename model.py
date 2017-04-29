@@ -99,7 +99,7 @@ class Model(object):
       G, tf.transpose(rel_embed)
     ) 
     G = tf.reshape(G, [bz, n, nr])
-    AP = tf.nn.softmax(G)# attention pooling tensor
+    AP = tf.nn.softmax(G, dim=0)# attention pooling tensor
 
     # predict
     wo = tf.matmul(
@@ -133,7 +133,7 @@ class Model(object):
       return
 
     # train
-    mask = tf.one_hot(in_y, nr, on_value=0., off_value=1.)# bz, nr
+    mask = tf.one_hot(in_y, nr, on_value=1000., off_value=1.)# bz, nr
     neg_dist = tf.multiply(all_dist, mask)
     neg_y = tf.argmin(neg_dist, axis=-1)# bz, 1
     neg_y = tf.nn.embedding_lookup(rel_embed, neg_y)# bz, dc

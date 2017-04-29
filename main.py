@@ -55,6 +55,8 @@ def init():
     logging.basicConfig(level=logging.DEBUG,
                       format='%(asctime)s %(message)s', datefmt='%m-%d %H:%M')
   else:
+    if not os.path.exists(config.save_path):
+      os.makedirs(config.save_path)
     logging.basicConfig(filename=config.log_file,
                       filemode='w', level=logging.DEBUG,
                       format='%(asctime)s %(message)s', datefmt='%m-%d %H:%M')

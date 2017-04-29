@@ -15,8 +15,8 @@ tf.app.flags.DEFINE_string("embedding_vocab", "embedding/senna/words.lst",
                            "embedding vocab file")
 tf.app.flags.DEFINE_string("train_file", "train.txt", "training file")
 tf.app.flags.DEFINE_string("test_file", "test.txt", "Test file")
-tf.app.flags.DEFINE_string("log_file", None, "Log file")
-tf.app.flags.DEFINE_string("save_path", None, "save model here")
+tf.app.flags.DEFINE_string("log_file", 'run/log.txt', "Log file")
+tf.app.flags.DEFINE_string("save_path", 'run/', "save model here")
 tf.app.flags.DEFINE_string("pad_word", "<PAD>", "save model here")
 
 
