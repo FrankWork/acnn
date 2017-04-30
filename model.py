@@ -65,7 +65,7 @@ class Model(object):
       return :  (bz, n)
       '''
       return tf.reduce_sum(
-                tf.multiply(tf.reshape(e1, [bz, 1, dw]), x), 
+                tf.multiply(tf.reshape(e, [bz, 1, dw]), x), 
                 -1
              )
 
@@ -112,7 +112,7 @@ class Model(object):
       G, tf.transpose(rel_embed)
     ) 
     G = tf.reshape(G, [bz, n, nr])
-    AP = tf.nn.softmax(G, dim=0)# attention pooling tensor
+    AP = tf.nn.softmax(G, dim=1)# attention pooling tensor
 
     # predict
     wo = tf.matmul(
@@ -133,7 +133,7 @@ class Model(object):
     # accuracy
     all_dist = distance(
               tf.tile(tf.expand_dims(wo, axis=1), [1, nr, 1]), # bz, nr, dc
-              rel_embed,# bz, dc
+              rel_embed,# nr, dc
               axis=-1
     )# bz, nr
     predict = tf.argmin(all_dist, axis=-1)
