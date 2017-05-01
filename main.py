@@ -125,7 +125,7 @@ def main(_):
           train_iter = utils.batch_iter(list(zip(*train_vec)), bz, shuffle=True)
           test_iter = utils.batch_iter(list(zip(*test_vec)), bz, shuffle=False)
 
-          train_acc = run_epoch(session, m_train, train_iter)
+          train_acc = run_epoch(session, m_train, train_iter, verbose=False)
           logging.info("Epoch: %d Train acc: %.2f%%" % (epoch + 1, train_acc*100))
           test_acc = run_epoch(session, m_test, test_iter, is_training=False)
           logging.info("Epoch: %d test acc: %.2f%%" % (epoch + 1, test_acc*100))

@@ -29,32 +29,14 @@ class Model(object):
     pos_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position_embed')
     rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
 
-    # slide window
-    # hk = (k-1)//2 # half of the slide window size
-    # def slide_window(x):
-    #   sw_x = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*hk
-    #   sw_x = tf.map_fn(lambda i: sw_x[:, i-hk:i+hk+1], tf.range(hk, n+hk), dtype=tf.int32)
-    #   return tf.stack(tf.unstack(sw_x), axis=1)
-    
-    # sw_x = slide_window(in_x)         # bz, n, k
-    # sw_dist1 = slide_window(in_dist1) # bz, n, k
-    # sw_dist2 = slide_window(in_dist2) # bz, n, k
-
     # embdding lookup
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# bz,dw
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# bz,dw
     x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
-    # x_k = tf.nn.embedding_lookup(embed, sw_x, name='x_k') # bz,n,k,dw
-    # dist1 = tf.nn.embedding_lookup(pos_embed, sw_dist1, name='dist1')#bz, n, k,dp
-    # dist2 = tf.nn.embedding_lookup(pos_embed, sw_dist2, name='dist2')# bz, n, k,dp
     dist1 = tf.nn.embedding_lookup(pos_embed, in_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos_embed, in_dist2, name='dist2')# bz, n, k,dp
     y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
-    # z = tf.concat([x_k, dist1, dist2], -1) # bz, n, k, dw+2*dp
-    # z = tf.reshape(z, [bz, n, k*(dw+2*dp)]) # bz, n, k*(dw+2*dp)
-    # if is_training and keep_prob < 1:
-    #   z = tf.nn.dropout(z, keep_prob)
 
     # input attention
     def inner_product(e, x):
@@ -67,25 +49,16 @@ class Model(object):
       return tf.reduce_sum(
                 tf.multiply(tf.reshape(e, [bz, 1, dw]), x), 
                 -1
-             )
+              )
 
     alpha1 = tf.nn.softmax(inner_product(e1, x))# bz, n
     alpha2 = tf.nn.softmax(inner_product(e2, x))# bz, n
     alpha = (alpha1 + alpha2)/2
 
-    # r = tf.multiply(z, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d,   d=(dw+2*dp)
-
     # convolution
     # x: (batch_size, max_len, embdding_size, 1)
     # w: (filter_size, embdding_size, 1, num_filters)
     d = dw+2*dp
-    # w = tf.get_variable(initializer=initializer,shape=[1, k*d, 1, dc],name='weight')
-    # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-    # conv = tf.nn.conv2d(tf.reshape(r, [bz,n,k*d,1]), w, strides=[1,1,k*d,1],padding="SAME")
-    # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
-    # R = tf.reshape(R, [bz, n, dc])
-
-
     w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
     b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
     conv = tf.nn.conv2d(tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
@@ -119,18 +92,25 @@ class Model(object):
       tf.transpose(R, perm=[0, 2, 1]), # batch transpose: (bz, n, dc) => (bz,dc,n)
       AP
     )# (bz, dc, nr)
-    wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+    # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+    wo = tf.nn.max_pool(tf.expand_dims(wo,-1),
+                        ksize=[1,1,nr,1],
+                        strides=[1,1,nr,1],
+                        padding="SAME"
+          )# (bz, dc, 1, 1)
+    wo=tf.reshape(wo,[bz, dc])
 
     if is_training and keep_prob < 1:
       wo = tf.nn.dropout(wo, keep_prob)
-    
+
+    # accuracy
     def distance(wo, y, axis=None):
       return tf.norm(
-        tf.nn.l2_normalize(wo, dim=-1) - y,
-        axis = axis
-      )# a scalar value
-    
-    # accuracy
+                tf.nn.l2_normalize(wo, dim=-1) - y,
+                axis = axis
+            )# a scalar value
+
+
     all_dist = distance(
               tf.tile(tf.expand_dims(wo, axis=1), [1, nr, 1]), # bz, nr, dc
               rel_embed,# nr, dc
@@ -162,8 +142,8 @@ class Model(object):
     self.loss = loss
 
     # optimizer 
-    optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
-    # optimizer = tf.train.AdamOptimizer(config.learning_rate)
+    # optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
+    optimizer = tf.train.AdamOptimizer(config.learning_rate)
 
     tvars = tf.trainable_variables()
     grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
@@ -175,6 +155,3 @@ class Model(object):
     train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
     self.train_op = train_op
     self.global_step = global_step
-
-
-
