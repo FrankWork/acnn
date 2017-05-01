@@ -152,6 +152,8 @@ class Model(object):
     neg_y = tf.nn.embedding_lookup(rel_embed, neg_y)# bz, dc
 
     l2_loss = tf.nn.l2_loss(rel_embed)
+    l2_loss += tf.nn.l2_loss(embed)
+    l2_loss += tf.nn.l2_loss(pos_embed)
     l2_loss += tf.nn.l2_loss(U)
     l2_loss += tf.nn.l2_loss(w)
     l2_loss += tf.nn.l2_loss(b)
@@ -161,6 +163,7 @@ class Model(object):
 
     # optimizer 
     optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
+    # optimizer = tf.train.AdamOptimizer(config.learning_rate)
 
     tvars = tf.trainable_variables()
     grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
