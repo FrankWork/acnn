@@ -132,13 +132,13 @@ class Model(object):
     neg_y = tf.nn.embedding_lookup(rel_embed, neg_y)# bz, dc
 
     l2_loss = tf.nn.l2_loss(rel_embed)
-    l2_loss += tf.nn.l2_loss(embed)
-    l2_loss += tf.nn.l2_loss(pos_embed)
+    # l2_loss += tf.nn.l2_loss(embed)
+    # l2_loss += tf.nn.l2_loss(pos_embed)
     l2_loss += tf.nn.l2_loss(U)
     l2_loss += tf.nn.l2_loss(w)
     l2_loss += tf.nn.l2_loss(b)
 
-    loss = distance(wo, y) + (1-distance(wo, neg_y)) + config.l2_reg_lambda * l2_loss
+    loss = distance(wo, y) + (config.margin-distance(wo, neg_y)) + config.l2_reg_lambda * l2_loss
     self.loss = loss
 
     # optimizer 
@@ -150,7 +150,7 @@ class Model(object):
                                       config.grad_clipping)
     capped_gvs = zip(grads, tvars)
 
-    # tf.logging.set_verbosity(tf.logging.WARN)
+    tf.logging.set_verbosity(tf.logging.WARN)
     global_step = tf.Variable(0, trainable=False, name='global_step')
     train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
     self.train_op = train_op
