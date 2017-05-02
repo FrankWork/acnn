@@ -95,13 +95,13 @@ class Model(object):
       tf.transpose(R, perm=[0, 2, 1]), # batch transpose: (bz, n, dc) => (bz,dc,n)
       AP
     )# (bz, dc, nr)
-    # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
-    wo = tf.nn.max_pool(tf.expand_dims(wo,-1),
-                        ksize=[1,1,nr,1],
-                        strides=[1,1,nr,1],
-                        padding="SAME"
-          )# (bz, dc, 1, 1)
-    wo=tf.reshape(wo,[bz, dc])
+    wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+    # wo = tf.nn.max_pool(tf.expand_dims(wo,-1),
+    #                     ksize=[1,1,nr,1],
+    #                     strides=[1,1,nr,1],
+    #                     padding="SAME"
+    #       )# (bz, dc, 1, 1)
+    # wo=tf.reshape(wo,[bz, dc])
 
     if is_training and keep_prob < 1:
       wo = tf.nn.dropout(wo, keep_prob)
