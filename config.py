@@ -15,26 +15,26 @@ tf.app.flags.DEFINE_string("embedding_vocab", "embedding/senna/words.lst",
                            "embedding vocab file")
 tf.app.flags.DEFINE_string("train_file", "train.txt", "training file")
 tf.app.flags.DEFINE_string("test_file", "test.txt", "Test file")
-tf.app.flags.DEFINE_string("log_file", 'run/log.txt', "Log file") # 
-tf.app.flags.DEFINE_string("save_path", 'run/', "save model here")#
+tf.app.flags.DEFINE_string("log_file", None, "Log file") # 'run/log.txt'
+tf.app.flags.DEFINE_string("save_path", None, "save model here")#'run/'
 tf.app.flags.DEFINE_string("pad_word", "<PAD>", "save model here")
 
 
 # Model details
 tf.app.flags.DEFINE_integer("pos_embed_num", 123, "position embedding number")
-tf.app.flags.DEFINE_integer("pos_embed_size", 25, "position embedding size")
+tf.app.flags.DEFINE_integer("pos_embed_size", 5, "position embedding size")
 tf.app.flags.DEFINE_integer("slide_window", 3, "Slide window size")
-tf.app.flags.DEFINE_integer("num_filters", 1000, 
+tf.app.flags.DEFINE_integer("num_filters", 100, 
                             "How many features a convolution op have to output")
 tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 
-
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
-tf.app.flags.DEFINE_integer("num_epoches", 200, "Number of epoches")
+tf.app.flags.DEFINE_integer("num_epoches", 50, "Number of epoches")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "Dropout keep prob.")
 tf.app.flags.DEFINE_float("learning_rate", 0.03, "Learning rate.")
-tf.app.flags.DEFINE_float("l2_reg_lambda", 0.0001, "regularization parameter")
+tf.app.flags.DEFINE_float("l2_reg_lambda", 1, "regularization parameter")
+tf.app.flags.DEFINE_float("learning_rate2", 1e-3, "learning_rate for regularization")
 tf.app.flags.DEFINE_float("margin", 1, "margin based loss function")
 tf.app.flags.DEFINE_float("grad_clipping", 10., "Gradient clipping.")
 

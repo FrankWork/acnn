@@ -104,10 +104,9 @@ def vectorize(data, word_dict, max_len):
   
 
   for sent, p1, p2 in zip(sents_vec, e1_pos, e2_pos):
-    #FIXME: padding value?
     # current word position - last word position of e1 or e2
-    dist1.append([pos(idx-p1[1]) for idx, _ in enumerate(sent)])
-    dist2.append([pos(idx-p2[1]) for idx, _ in enumerate(sent)])
+    dist1.append([pos(p1[1]-idx) for idx, _ in enumerate(sent)])
+    dist2.append([pos(p2[1]-idx) for idx, _ in enumerate(sent)])
   
   return sents_vec, relations, e1_vec, e2_vec, dist1, dist2
 

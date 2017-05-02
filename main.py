@@ -26,7 +26,7 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
     if is_training:
-      _, acc, loss = session.run([model.train_op, model.acc, model.loss], feed_dict=feed_dict)
+      _, _, acc, loss = session.run([model.train_op, model.reg_op, model.acc, model.loss], feed_dict=feed_dict)
       acc_count += acc
       if verbose and step%10 == 0:
         logging.info("  step: %d acc: %.2f%% loss: %.2f time: %.2f" %(
