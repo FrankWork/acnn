@@ -97,7 +97,7 @@ class Model(object):
     l2_loss += tf.nn.l2_loss(b_o)
     l2_loss = config.l2_reg_lambda * l2_loss
     
-    self.loss = loss 
+    self.loss = loss + l2_loss
 
     if not is_training:
       return
@@ -105,22 +105,20 @@ class Model(object):
     # optimizer 
     # optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
     optimizer = tf.train.AdamOptimizer(config.learning_rate)
-    optimizer2 = tf.train.AdamOptimizer(config.learning_rate2)
+    # optimizer2 = tf.train.AdamOptimizer(config.learning_rate2)
 
-    tvars = tf.trainable_variables()
-    grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
-                                      config.grad_clipping)
-    capped_gvs = zip(grads, tvars)
+    # tvars = tf.trainable_variables()
+    # grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
+    #                                   config.grad_clipping)
+    # capped_gvs = zip(grads, tvars)
 
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    # tf.logging.set_verbosity(tf.logging.ERROR)
     global_step = tf.Variable(0, trainable=False, name='global_step')
-    train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
-    reg_op = optimizer2.minimize(l2_loss)
+    # train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
+    # reg_op = optimizer2.minimize(l2_loss)
 
-
-
-    self.train_op = train_op
-    self.reg_op = reg_op
+    self.train_op = optimizer.minimize(self.loss)
+    self.reg_op = tf.no_op()
     self.global_step = global_step
 
     
