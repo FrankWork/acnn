@@ -37,7 +37,7 @@ class Model(object):
     x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
     dist1 = tf.nn.embedding_lookup(pos1_embed, in_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
-    y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
+    # y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
     # convolution
     # x: (batch_size, max_len, embdding_size, 1)
