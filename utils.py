@@ -92,9 +92,30 @@ def vectorize(data, word_dict, max_len):
     # e1_vec.append(vec[pos1[0] : pos1[1]+1])
     # e2_vec.append(vec[pos2[0] : pos2[1]+1])
 
-    # last word of e1 and e2
-    e1_vec.append(vec[pos1[1]])
-    e2_vec.append(vec[pos2[1]])
+    # # last word of e1 and e2
+    # e1_vec.append(vec[pos1[1]])
+    # e2_vec.append(vec[pos2[1]])
+
+    # 3 word window of e1 or e2
+    def e_vec_f(pos):
+      e_tmp = []
+      i = pos[0]
+      if i > 0:
+        e_tmp.append(vec[i-1])
+      else:
+        e_tmp.append(vec[0])
+      
+      e_tmp.append(vec[i])
+
+      if i < len(vec)-1:
+        e_tmp.append(vec[i+1])
+      else:
+        e_tmp.append(vec[i])
+      
+      return e_tmp
+    e1_vec.append(e_vec_f(pos1))
+    e2_vec.append(e_vec_f(pos2))
+
 
 
   # compute relative distance
