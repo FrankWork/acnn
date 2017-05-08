@@ -51,7 +51,7 @@ class Model(object):
       x_conv = tf.nn.dropout(x_conv, keep_prob)
 
     for i, k in enumerate(filter_sizes):
-      with tf.name_scope('conv-%s' % k):
+      with tf.variable_scope("conv-%d" % k):# , reuse=False
         w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
         b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
         conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")
