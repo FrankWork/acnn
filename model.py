@@ -1,7 +1,56 @@
 import tensorflow as tf
 
-# step 2000, 0.69
-# Epoch: 100 Train: 82.05% Test: 63.78%
+# 05-08 23:35 Epoch: 1 Train: 11.53% Test: 30.11%
+# 05-08 23:35 Epoch: 2 Train: 23.43% Test: 43.70%
+# 05-08 23:35 Epoch: 3 Train: 33.38% Test: 49.48%
+# 05-08 23:35 Epoch: 4 Train: 40.21% Test: 54.37%
+# 05-08 23:35 Epoch: 5 Train: 43.60% Test: 56.85%
+# 05-08 23:35 Epoch: 6 Train: 47.60% Test: 59.00%
+# 05-08 23:36 Epoch: 7 Train: 50.79% Test: 59.59%
+# 05-08 23:36 Epoch: 8 Train: 54.76% Test: 61.81%
+# 05-08 23:36 Epoch: 9 Train: 56.53% Test: 63.07%
+# 05-08 23:36 Epoch: 10 Train: 59.44% Test: 65.15%
+# 05-08 23:36 Epoch: 11 Train: 62.09% Test: 66.52%
+# 05-08 23:36 Epoch: 12 Train: 63.19% Test: 67.19%
+# 05-08 23:36 Epoch: 13 Train: 65.16% Test: 69.11%
+# 05-08 23:37 Epoch: 14 Train: 67.06% Test: 69.56%
+# 05-08 23:37 Epoch: 15 Train: 68.46% Test: 70.15%
+# 05-08 23:37 Epoch: 16 Train: 69.14% Test: 70.81%
+# 05-08 23:37 Epoch: 17 Train: 69.97% Test: 70.85%
+# 05-08 23:37 Epoch: 18 Train: 71.65% Test: 70.41%
+# 05-08 23:37 Epoch: 19 Train: 72.67% Test: 71.00%
+# 05-08 23:38 Epoch: 20 Train: 73.04% Test: 71.96%
+# 05-08 23:38 Epoch: 21 Train: 74.29% Test: 71.89%
+# 05-08 23:38 Epoch: 22 Train: 74.52% Test: 72.00%
+# 05-08 23:38 Epoch: 23 Train: 76.53% Test: 72.37%
+# 05-08 23:38 Epoch: 24 Train: 76.92% Test: 72.81%
+# 05-08 23:38 Epoch: 25 Train: 76.89% Test: 73.11%
+# 05-08 23:38 Epoch: 26 Train: 78.85% Test: 73.07%
+# 05-08 23:39 Epoch: 27 Train: 79.89% Test: 73.22%
+# 05-08 23:39 Epoch: 28 Train: 79.83% Test: 73.59%
+# 05-08 23:39 Epoch: 29 Train: 80.04% Test: 74.04%
+# 05-08 23:39 Epoch: 30 Train: 81.19% Test: 72.96%
+# 05-08 23:39 Epoch: 31 Train: 82.05% Test: 73.52%
+# 05-08 23:39 Epoch: 32 Train: 82.09% Test: 73.93%
+# 05-08 23:39 Epoch: 33 Train: 82.78% Test: 74.19%
+# 05-08 23:40 Epoch: 34 Train: 83.35% Test: 74.41%
+# 05-08 23:40 Epoch: 35 Train: 83.23% Test: 73.70%
+# 05-08 23:40 Epoch: 36 Train: 83.90% Test: 74.22%
+# 05-08 23:40 Epoch: 37 Train: 84.28% Test: 73.96%
+# 05-08 23:40 Epoch: 38 Train: 84.69% Test: 74.30%
+# 05-08 23:40 Epoch: 39 Train: 85.88% Test: 74.78%
+# 05-08 23:41 Epoch: 40 Train: 86.20% Test: 75.11%
+# 05-08 23:41 Epoch: 41 Train: 86.66% Test: 74.37%
+# 05-08 23:41 Epoch: 42 Train: 87.15% Test: 74.85%
+# 05-08 23:41 Epoch: 43 Train: 87.64% Test: 75.15%
+# 05-08 23:41 Epoch: 44 Train: 87.76% Test: 75.41%
+# 05-08 23:41 Epoch: 45 Train: 87.85% Test: 75.59%
+# 05-08 23:41 Epoch: 46 Train: 89.20% Test: 75.37%
+# 05-08 23:42 Epoch: 47 Train: 88.59% Test: 75.81%
+# 05-08 23:42 Epoch: 48 Train: 88.66% Test: 76.07%
+# 05-08 23:42 Epoch: 49 Train: 89.80% Test: 75.52%
+# 05-08 23:42 Epoch: 50 Train: 89.76% Test: 75.81%
+
 class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
