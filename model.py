@@ -25,7 +25,7 @@ class Model(object):
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     # embeddings
-    initializer = tf.truncated_normal_initializer()
+    initializer = tf.truncated_normal_initializer(stddev=0.1)
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
     pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
     pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
