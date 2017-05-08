@@ -1,3 +1,5 @@
 tmp*
 .vscode/
 embeddings.txt
+__pycache__/
+*.pyc
