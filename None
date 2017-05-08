@@ -1,0 +1,31 @@
+05-08 13:37 trian data: 8000
+05-08 13:37 test data: 2717
+05-08 13:37 total words: 22483
+05-08 13:37 embeddings: 0.00%(pre_trained) unknown: 2966
+05-08 13:37 
+	embedding_size:	50
+	keep_prob:	0.5
+	data_path:	data/
+	num_epoches:	30
+	test_only:	True
+	grad_clipping:	10.0
+	train_file:	data/train.txt
+	slide_window:	3
+	pos_embed_num:	123
+	embedding_file:	data/embedding/senna/embeddings.txt
+	save_path:	run/
+	test_file:	data/test.txt
+	pad_word:	<PAD>
+	l2_reg_lambda:	1
+	learning_rate:	0.03
+	num_filters:	100
+	batch_size:	100
+	embedding_vocab:	data/embedding/senna/words.lst
+	classnum:	19
+	learning_rate2:	0.001
+	log_file:	None
+	margin:	1
+	pos_embed_size:	5
+
+05-08 13:37 data shape: (8000, 97)
+05-08 13:37 data shape: (2717, 97)

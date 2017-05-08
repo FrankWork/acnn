@@ -15,8 +15,8 @@ tf.app.flags.DEFINE_string("embedding_vocab", "embedding/senna/words.lst",
                            "embedding vocab file")
 tf.app.flags.DEFINE_string("train_file", "train.txt", "training file")
 tf.app.flags.DEFINE_string("test_file", "test.txt", "Test file")
-tf.app.flags.DEFINE_string("log_file", None, "Log file") # 'run/log.txt'
-tf.app.flags.DEFINE_string("save_path", None, "save model here")#'run/'
+tf.app.flags.DEFINE_string("log_file", 'run/log.txt', "Log file") # 
+tf.app.flags.DEFINE_string("save_path", 'run/', "save model here")#
 tf.app.flags.DEFINE_string("pad_word", "<PAD>", "save model here")
 
 
@@ -32,8 +32,8 @@ tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 30, "Number of epoches")
 tf.app.flags.DEFINE_float("keep_prob", 0.5, "Dropout keep prob.")
-tf.app.flags.DEFINE_float("learning_rate", 0.03, "Learning rate.")
-tf.app.flags.DEFINE_float("l2_reg_lambda", 0, "regularization parameter")
+tf.app.flags.DEFINE_float("learning_rate", 1e-3, "Learning rate.")
+tf.app.flags.DEFINE_float("l2_reg_lambda", 1, "regularization parameter")
 tf.app.flags.DEFINE_float("learning_rate2", 1e-3, "learning_rate for regularization")
 tf.app.flags.DEFINE_float("margin", 1, "margin based loss function")
 tf.app.flags.DEFINE_float("grad_clipping", 10., "Gradient clipping.")

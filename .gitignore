@@ -3,3 +3,4 @@ tmp*
 embeddings.txt
 __pycache__/
 *.pyc
+run/
