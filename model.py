@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 # step 2000, 0.69
-
+# Epoch: 100 Train: 82.05% Test: 63.78%
 class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
