@@ -24,7 +24,7 @@ class Model(object):
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     # embeddings
-    initializer = tf.truncated_normal_initializer()
+    initializer = tf.truncated_normal_initializer(stddev=0.1)
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
     pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
     pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
@@ -141,51 +141,26 @@ class Model(object):
     l2_loss = config.l2_reg_lambda * l2_loss
 
     loss = distance(wo, y) + (config.margin - distance(wo, neg_y))
-    self.loss = loss
+    self.loss = loss + l2_loss
 
     # optimizer 
     # optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
     optimizer = tf.train.AdamOptimizer(config.learning_rate)
-    optimizer2 = tf.train.AdamOptimizer(config.learning_rate2)
+    # optimizer2 = tf.train.AdamOptimizer(config.learning_rate2)
 
-    tvars = tf.trainable_variables()
-    grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
-                                      config.grad_clipping)
-    capped_gvs = zip(grads, tvars)
+    # tvars = tf.trainable_variables()
+    # grads, _ = tf.clip_by_global_norm(tf.gradients(loss, tvars),
+    #                                   config.grad_clipping)
+    # capped_gvs = zip(grads, tvars)
 
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    # tf.logging.set_verbosity(tf.logging.ERROR)
     global_step = tf.Variable(0, trainable=False, name='global_step')
-    train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
-    reg_op = optimizer2.minimize(l2_loss)
+    # train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
+    # reg_op = optimizer2.minimize(l2_loss)
 
 
 
-    self.train_op = train_op
-    self.reg_op = reg_op
-    # self.reg_op = tf.no_op()
+    self.train_op = optimizer.minimize(self.loss)
+    # self.reg_op = reg_op
+    self.reg_op = tf.no_op()
     self.global_step = global_step
-
-    # max pooling
-    # pooled = tf.nn.max_pool(tf.expand_dims(R, axis=-1),
-    #                     ksize=[1,n,1,1],
-    #                     strides=[1,n,1,1],
-    #                     padding="SAME"
-    #       )
-    # h_pool_flat = tf.reshape(pooled,[-1,dc])
-    # if is_training and keep_prob < 1:
-    #   h_pool_flat = tf.nn.dropout(h_pool_flat, keep_prob)
-    # W_o = tf.get_variable(initializer=initializer,shape=[dc,nr],name='w_o')
-    # b_o = tf.get_variable(initializer=initializer,shape=[nr],name='b_o')
-    # scores = tf.nn.xw_plus_b(h_pool_flat,W_o,b_o,name="scores")
-    # predict = tf.argmax(scores,1,name="predictions")
-    # predict = tf.cast(predict, dtype=tf.int32)
-    # acc = tf.reduce_sum(tf.cast(tf.equal(predict, in_y), dtype=tf.int32))
-    # self.predict = predict
-    # self.acc = acc
-    # loss = tf.reduce_mean(
-    #   tf.nn.softmax_cross_entropy_with_logits(logits=scores, 
-    #                                           labels=tf.one_hot(in_y, nr))
-    # )
-    # l2_loss = tf.nn.l2_loss(W_o)
-    # l2_loss += tf.nn.l2_loss(b_o)
-    # l2_loss = config.l2_reg_lambda * l2_loss
