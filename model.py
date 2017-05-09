@@ -68,8 +68,9 @@ class Model(object):
     w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
     b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
     conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")
-    r = tf.multiply(tf.reshape(conv, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
-
+    # r = tf.multiply(tf.reshape(conv, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
+    r = conv
+    
     R = tf.nn.tanh(tf.nn.bias_add(r,b),name="R") # bz, n, 1, dc
     R = tf.reshape(R, [bz, n, dc])
 
