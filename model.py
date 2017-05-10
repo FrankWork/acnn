@@ -142,10 +142,11 @@ class Model(object):
     with tf.name_scope('predict'):
       wo_norm = tf.nn.l2_normalize(wo, 1)
       wo_norm_tile = tf.tile(tf.expand_dims(wo_norm, axis=1), [1, nr, 1])
-      all_distance = wo_norm_tile - tf.nn.l2_normalize(rel_embed, dim=1)
+      # all_distance = wo_norm_tile - tf.nn.l2_normalize(rel_embed, dim=1)
+      all_distance = tf.add(wo_norm_tile, tf.multiply(-1.0, tf.nn.l2_normalize(rel_embed, dim=1)))
       all_distance = tf.sqrt(tf.reduce_sum(tf.square(all_distance), 2))
 
-      predict = tf.argmin(all_distance, axis=-1)
+      predict = tf.argmin(all_distance, axis=1)
       predict = tf.cast(predict, dtype=tf.int32)
       acc = tf.reduce_sum(tf.cast(tf.equal(predict, in_y), dtype=tf.int32))
       self.predict = predict
@@ -153,14 +154,19 @@ class Model(object):
 
     if not is_training:
       return
+      
     with tf.name_scope('loss'):
       mask = tf.one_hot(in_y, nr, on_value=1000., off_value=0.)# bz, nr
-      neg_distance = tf.reduce_min(tf.add(all_distance, mask),1)
+      # neg_distance = tf.reduce_min(tf.add(all_distance, mask),1)
+      neg_distance = tf.reduce_min(tf.add(all_distance,tf.reshape(mask,[-1,nr])),1)
 
-      pos_distance = wo_norm - tf.nn.l2_normalize(y, dim=1)
+      # pos_distance = wo_norm - tf.nn.l2_normalize(y, dim=1)
+      pos_distance = tf.add(wo_norm,tf.reshape(tf.multiply(-1.0,tf.nn.l2_normalize(y,dim=1)),[-1,dc]))
       pos_distance = tf.sqrt(tf.reduce_sum(tf.square(pos_distance),1))
 
-      loss = pos_distance + (config.margin - neg_distance)
+      loss = tf.reduce_mean( tf.add(tf.constant(1.0), 
+          tf.add(pos_distance,tf.multiply(-1.0,neg_distance))))
+      # loss = pos_distance + (config.margin - neg_distance)
 
       l2_loss = tf.nn.l2_loss(rel_embed)
       l2_loss += tf.nn.l2_loss(U)
@@ -169,6 +175,17 @@ class Model(object):
       l2_loss = 0.003 * config.l2_reg_lambda * l2_loss
 
       self.loss = loss + l2_loss
+
+
+
+
+
+
+
+
+
+
+
 
 
       
