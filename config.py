@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 100, "Number of epoches")
-tf.app.flags.DEFINE_float("keep_prob", 0.5, "Dropout keep prob.")
+tf.app.flags.DEFINE_float("keep_prob", 1.0, "Dropout keep prob.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-3, "Learning rate.")
 tf.app.flags.DEFINE_float("l2_reg_lambda", 1, "regularization parameter")
 # tf.app.flags.DEFINE_float("learning_rate2", 1e-3, "learning_rate for regularization")

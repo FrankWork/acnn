@@ -5,8 +5,8 @@ n = 3
 d = 4
 
 
-x = tf.reshape(tf.range(b*d, dtype=tf.float32), [b,d])
-y = tf.norm(x, axis=-1)
+x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
+y = tf.norm(x, axis=2)
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
