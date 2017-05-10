@@ -47,7 +47,7 @@ class Model(object):
 
 
     with tf.name_scope('input_attention'):
-      A1 = tf.matmul(x, tf.expand_dims(e1, -1))
+      A1 = tf.matmul(x, tf.expand_dims(e1, -1))# bz, n, 1
       A2 = tf.matmul(x, tf.expand_dims(e2, -1))
       A1 = tf.reshape(A1, [bz, n])
       A2 = tf.reshape(A2, [bz, n])
@@ -55,20 +55,21 @@ class Model(object):
       alpha2 = tf.nn.softmax(A2)# bz, n
       alpha = (alpha1 + alpha2)/2
 
+
     with tf.name_scope('convolution'):
       # x: (batch_size, max_len, embdding_size, 1)
       # w: (filter_size, embdding_size, 1, num_filters)
       w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-      conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")
-      r = conv
-      # r = tf.multiply(tf.reshape(conv, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
+      conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
+      conv = tf.nn.bias_add(conv,b)
+      conv = tf.multiply(tf.reshape(conv, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
       
-      R = tf.nn.tanh(tf.nn.bias_add(r,b),name="R") # bz, n, 1, dc
-      R = tf.reshape(R, [bz, n, dc])
+      conv = tf.nn.tanh(conv,name="R") # bz, n, 1, dc
+      R = conv
 
     with tf.name_scope('attention_pooling'):
-      # # U: [dc, nr]
+      # U: [dc, nr]
       U = tf.get_variable(initializer=initializer,shape=[dc,nr],name='U')
       G = tf.matmul(# (bz*n,dc), (dc, nr) => (bz*n, nr)
         tf.reshape(R, [bz*n, dc]), U
@@ -124,7 +125,6 @@ class Model(object):
       neg_y = tf.argmin(tf.add(all_distance, mask), axis=1)# bz,
       neg_y = tf.nn.embedding_lookup(rel_embed, neg_y)# bz, dc
       neg_distance = tf.norm(wo_norm - tf.nn.l2_normalize(neg_y, dim=1), axis=1)
-
       pos_distance = tf.norm(wo_norm - tf.nn.l2_normalize(y, dim=1), axis=1)
 
       loss = tf.reduce_mean(pos_distance + (config.margin - neg_distance))

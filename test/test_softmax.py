@@ -8,7 +8,7 @@ for i in range(n):
 
 x = tf.constant(ini,dtype=tf.float32)
 
-sx = tf.nn.softmax(x, dim=0)
+sx = tf.nn.softmax(x)
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())

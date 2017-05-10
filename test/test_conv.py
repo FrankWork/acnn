@@ -2,10 +2,10 @@ import tensorflow as tf
 
 b = 2
 n = 3
-d = 4
+d = 3
 k = 3
 
-dc = 5
+dc = 3
 
 x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
 
@@ -14,17 +14,15 @@ w = tf.get_variable(initializer=tf.ones_initializer(),shape=[k, d, 1, dc],name='
 conv = tf.nn.conv2d(tf.reshape(x, # bz, n, d
                           [b,n,d,1]), w, strides=[1,1,d,1], padding="SAME")
 # b, n, 1, dc
-# r = tf.multiply(tf.reshape(conv, [b, n, dc]), tf.reshape(alpha, [b, n, 1])) # b, n, 1, dc
+alpha = tf.reshape(tf.range(b*n, dtype=tf.float32), [b, n])
+r = tf.multiply(tf.reshape(conv, [b, n, dc]), tf.reshape(alpha, [b, 1, n])) # b, n, 1, dc
 
 # R = tf.nn.tanh(tf.nn.bias_add(r,b),name="R") # b, n, 1, dc
 # R = tf.reshape(R, [b, n, dc])
 
-y = conv
+y = tf.reshape(conv, [b, n, dc])
 
-ans = tf.reduce_sum(tf.multiply(
-  x[0],
-  tf.ones([k,d])
-))
+ans = r
 # ans = tf.constant(0)
 
 with tf.Session() as session:
