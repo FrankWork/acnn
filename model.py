@@ -3,15 +3,15 @@ import tensorflow as tf
 class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
+    n = config.max_len
     dw = config.embedding_size
     dp = config.pos_embed_size
     d = dw+2*dp
     np = config.pos_embed_num
-    n = config.max_len
-    k = config.slide_window
-    dc = config.num_filters
     nr = config.classnum # number of relations
+    dc = config.num_filters
     keep_prob = config.keep_prob
+    self.config = config
 
     with tf.name_scope('input'):
       in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
@@ -40,11 +40,30 @@ class Model(object):
       dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
       y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
-      x_conv = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
+      x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
                         [bz,n,d,1])
+    
       if is_training and keep_prob < 1:
-        x_conv = tf.nn.dropout(x_conv, keep_prob)
+        x_concat = tf.nn.dropout(x_concat, keep_prob)
 
+      self.l2_loss = tf.nn.l2_loss(rel_embed)
+    
+    with tf.name_scope('forword'):
+      alpha = self._input_attention(x, e1, e2, initializer=initializer)
+      R = self._convolution(x_concat, initializer=initializer, alpha=alpha)
+      wo = self._attentive_pooling(R, rel_embed, initializer=initializer)
+
+      if is_training and keep_prob < 1:
+        wo = tf.nn.dropout(wo, keep_prob)
+      
+      self._loss_and_train(wo, rel_embed, in_y, y, is_training)
+
+    
+  
+
+  def _input_attention(self, x, e1, e2, initializer=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
 
     with tf.name_scope('input_attention'):
       A1 = tf.matmul(x, tf.expand_dims(e1, -1))# bz, n, 1
@@ -53,18 +72,69 @@ class Model(object):
       A2 = tf.reshape(A2, [bz, n])
       alpha1 = tf.nn.softmax(A1)# bz, n
       alpha2 = tf.nn.softmax(A2)# bz, n
-      alpha = (alpha1 + alpha2)/2
 
+      # bz = self.config.batch_size
+      # n = self.config.max_len
+      # dw = self.config.embedding_size
+
+      # A1 = tf.get_variable(initializer=initializer,shape=[dw, dw],name='A1')
+      # alpha1 = tf.matmul(tf.reshape(x, [-1, dw]), A1)# b*n, d
+      # alpha1 = tf.matmul(tf.reshape(alpha1, [bz, n, dw]), tf.reshape(e1, [bz, dw, 1]))
+      # alpha1 = tf.nn.softmax(tf.reshape(alpha1, [bz, n]))
+      # A2 = tf.get_variable(initializer=initializer,shape=[dw, dw],name='A2')
+      # alpha2 = tf.matmul(tf.reshape(x, [-1, dw]), A2)# b*n, d
+      # alpha2 = tf.matmul(tf.reshape(alpha2, [bz, n, dw]), tf.reshape(e2, [bz, dw, 1]))
+      # alpha2 = tf.nn.softmax(tf.reshape(alpha2, [bz, n]))
+
+      # self.l2_loss += tf.nn.l2_loss(A1)
+      # self.l2_loss += tf.nn.l2_loss(A2)
+
+      
+      alpha = (alpha1 + alpha2)/2
+      
+      return alpha
+
+  def _convolution(self, x_concat, initializer=None, alpha=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
+    k = self.config.slide_window
+    dw = self.config.embedding_size
+    dp = self.config.pos_embed_size
+    d = dw+2*dp
+    dc = self.config.num_filters
 
     with tf.name_scope('convolution'):
       # x: (batch_size, max_len, embdding_size, 1)
       # w: (filter_size, embdding_size, 1, num_filters)
       w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-      conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
+      conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
-      # R = tf.multiply(tf.reshape(R, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
-      R = tf.reshape(R, [bz, n, dc])
+
+      R = tf.reshape(R, [bz, n, dc])      
+      R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+      
+      
+
+      # w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
+      # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      # conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
+      # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+      # # R = tf.multiply(tf.reshape(R, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
+      # R = tf.reshape(R, [bz, n, dc])
+    
+    self.l2_loss += tf.nn.l2_loss(w)
+    self.l2_loss += tf.nn.l2_loss(b)
+    return R
+  def _attentive_pooling(self, R, rel_embed, initializer=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
+    k = self.config.slide_window
+    dw = self.config.embedding_size
+    dp = self.config.pos_embed_size
+    d = dw+2*dp
+    dc = self.config.num_filters
+    nr = self.config.classnum
 
     with tf.name_scope('attention_pooling'):
       # # no attention_pooling
@@ -109,13 +179,15 @@ class Model(object):
 
       # wo = tf.matmul(tf.transpose(R, perm=[0, 2, 1]),AP)# (bz, dc, nr)
       # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+      
+      self.l2_loss += tf.nn.l2_loss(U)
+      # self.l2_loss += tf.nn.l2_loss(W_o)
+      # self.l2_loss += tf.nn.l2_loss(b_o)
+      
+    return wo
 
-
-     
-
-
-      if is_training and keep_prob < 1:
-        wo = tf.nn.dropout(wo, keep_prob)
+  def _loss_and_train(self, wo, rel_embed, in_y, y, is_training):
+    nr = self.config.classnum
 
     with tf.name_scope('predict'):
       wo_norm = tf.nn.l2_normalize(wo, 1)
@@ -139,21 +211,12 @@ class Model(object):
       neg_distance = tf.norm(wo_norm - tf.nn.l2_normalize(neg_y, dim=1), axis=1)
       pos_distance = tf.norm(wo_norm - tf.nn.l2_normalize(y, dim=1), axis=1)
 
-      loss = tf.reduce_mean(pos_distance + (config.margin - neg_distance))
-
-      l2_loss = tf.nn.l2_loss(rel_embed)
-      l2_loss += tf.nn.l2_loss(U)
-      # l2_loss += tf.nn.l2_loss(W_o)
-      # l2_loss += tf.nn.l2_loss(b_o)
-      l2_loss += tf.nn.l2_loss(w)
-      l2_loss += tf.nn.l2_loss(b)
-      l2_loss = 0.003 * config.l2_reg_lambda * l2_loss
-
-      self.loss = loss + l2_loss
+      loss = tf.reduce_mean(pos_distance + (self.config.margin - neg_distance))
+      self.loss = loss + 0.003 * self.config.l2_reg_lambda * self.l2_loss
 
     with tf.name_scope('optimizer'):
       # optimizer = tf.train.GradientDescentOptimizer(config.learning_rate)
-      optimizer = tf.train.AdamOptimizer(config.learning_rate)
+      optimizer = tf.train.AdamOptimizer(self.config.learning_rate)
       # optimizer2 = tf.train.AdamOptimizer(config.learning_rate2)
 
       # tvars = tf.trainable_variables()
@@ -165,8 +228,6 @@ class Model(object):
       global_step = tf.Variable(0, trainable=False, name='global_step')
       # train_op = optimizer.apply_gradients(capped_gvs, global_step=global_step)
       # reg_op = optimizer2.minimize(l2_loss)
-
-
 
       self.train_op = optimizer.minimize(self.loss)
       # self.reg_op = reg_op
