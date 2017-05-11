@@ -61,40 +61,43 @@ class Model(object):
       w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")
-      r = conv
-      r = tf.multiply(tf.reshape(conv, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
       
-      R = tf.nn.tanh(tf.nn.bias_add(r,b),name="R") # bz, n, 1, dc
+      R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+      # R = tf.multiply(tf.reshape(R, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
+
       R = tf.reshape(R, [bz, n, dc])
 
     with tf.name_scope('attention_pooling'):
-      wo = tf.nn.max_pool(tf.expand_dims(R,-1),# bz, n, dc, 1
-                          ksize=[1,n,1,1],
-                          strides=[1,n,1,1],
-                          padding="SAME"
-            )# (bz, 1, dc, 1)
-      wo=tf.reshape(wo,[bz, dc])
-
-
-
-      # # U: [dc, nr]
-      # U = tf.get_variable(initializer=initializer,shape=[dc,nr],name='U')
-      # G = tf.matmul(tf.reshape(R, [bz*n, dc]), U)# (bz*n,dc), (dc, nr) => (bz*n, nr)
-      # G = tf.matmul(G, rel_embed) # (bz*n, nr), (nr, dc) => (bz*n, dc)
-      # G = tf.reshape(G, [bz, n, dc])
-      # AP = tf.nn.softmax(G, dim=1)# attention pooling tensor
-      # # predict
-      # wo = tf.matmul(
-      #   tf.transpose(R, perm=[0, 2, 1]), # batch transpose: (bz, n, dc) => (bz,dc,n)
-      #   AP
-      # )# (bz, dc, dc)
-      # # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
-      # wo = tf.nn.max_pool(tf.expand_dims(wo,-1),
-      #                     ksize=[1,1,dc,1],
-      #                     strides=[1,1,dc,1],
+      # # no attention_pooling
+      # wo = tf.nn.max_pool(tf.expand_dims(R,-1),# bz, n, dc, 1
+      #                     ksize=[1,n,1,1],
+      #                     strides=[1,n,1,1],
       #                     padding="SAME"
-      #       )# (bz, dc, 1, 1)
+      #       )# (bz, 1, dc, 1)
       # wo=tf.reshape(wo,[bz, dc])
+      # W_o = tf.get_variable(initializer=initializer,shape=[dc, dc],name='w_o')
+      # b_o = tf.get_variable(initializer=initializer,shape=[dc],name='b_o')
+      # wo = tf.nn.xw_plus_b(wo,W_o,b_o,name="scores")
+      
+
+      # U: [dc, nr]
+      U = tf.get_variable(initializer=initializer,shape=[dc,nr],name='U')
+      G = tf.matmul(tf.reshape(R, [bz*n, dc]), U)# (bz*n,dc), (dc, nr) => (bz*n, nr)
+      G = tf.matmul(G, rel_embed) # (bz*n, nr), (nr, dc) => (bz*n, dc)
+      G = tf.reshape(G, [bz, n, dc])
+      AP = tf.nn.softmax(G, dim=1)# attention pooling tensor
+      # predict
+      wo = tf.matmul(
+        tf.transpose(R, perm=[0, 2, 1]), # batch transpose: (bz, n, dc) => (bz,dc,n)
+        AP
+      )# (bz, dc, dc)
+      # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+      wo = tf.nn.max_pool(tf.expand_dims(wo,-1),
+                          ksize=[1,1,dc,1],
+                          strides=[1,1,dc,1],
+                          padding="SAME"
+            )# (bz, dc, 1, 1)
+      wo=tf.reshape(wo,[bz, dc])
 
 
 
@@ -107,6 +110,10 @@ class Model(object):
 
       # wo = tf.matmul(tf.transpose(R, perm=[0, 2, 1]),AP)# (bz, dc, nr)
       # wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+
+
+     
+
 
       if is_training and keep_prob < 1:
         wo = tf.nn.dropout(wo, keep_prob)
@@ -137,7 +144,9 @@ class Model(object):
       loss = tf.reduce_mean(pos_distance + (config.margin - neg_distance))
 
       l2_loss = tf.nn.l2_loss(rel_embed)
-      # l2_loss += tf.nn.l2_loss(U)
+      l2_loss += tf.nn.l2_loss(U)
+      # l2_loss += tf.nn.l2_loss(W_o)
+      # l2_loss += tf.nn.l2_loss(b_o)
       l2_loss += tf.nn.l2_loss(w)
       l2_loss += tf.nn.l2_loss(b)
       l2_loss = 0.003 * config.l2_reg_lambda * l2_loss
