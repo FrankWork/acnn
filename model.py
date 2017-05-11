@@ -1,56 +1,5 @@
 import tensorflow as tf
 
-# 05-08 23:35 Epoch: 1 Train: 11.53% Test: 30.11%
-# 05-08 23:35 Epoch: 2 Train: 23.43% Test: 43.70%
-# 05-08 23:35 Epoch: 3 Train: 33.38% Test: 49.48%
-# 05-08 23:35 Epoch: 4 Train: 40.21% Test: 54.37%
-# 05-08 23:35 Epoch: 5 Train: 43.60% Test: 56.85%
-# 05-08 23:35 Epoch: 6 Train: 47.60% Test: 59.00%
-# 05-08 23:36 Epoch: 7 Train: 50.79% Test: 59.59%
-# 05-08 23:36 Epoch: 8 Train: 54.76% Test: 61.81%
-# 05-08 23:36 Epoch: 9 Train: 56.53% Test: 63.07%
-# 05-08 23:36 Epoch: 10 Train: 59.44% Test: 65.15%
-# 05-08 23:36 Epoch: 11 Train: 62.09% Test: 66.52%
-# 05-08 23:36 Epoch: 12 Train: 63.19% Test: 67.19%
-# 05-08 23:36 Epoch: 13 Train: 65.16% Test: 69.11%
-# 05-08 23:37 Epoch: 14 Train: 67.06% Test: 69.56%
-# 05-08 23:37 Epoch: 15 Train: 68.46% Test: 70.15%
-# 05-08 23:37 Epoch: 16 Train: 69.14% Test: 70.81%
-# 05-08 23:37 Epoch: 17 Train: 69.97% Test: 70.85%
-# 05-08 23:37 Epoch: 18 Train: 71.65% Test: 70.41%
-# 05-08 23:37 Epoch: 19 Train: 72.67% Test: 71.00%
-# 05-08 23:38 Epoch: 20 Train: 73.04% Test: 71.96%
-# 05-08 23:38 Epoch: 21 Train: 74.29% Test: 71.89%
-# 05-08 23:38 Epoch: 22 Train: 74.52% Test: 72.00%
-# 05-08 23:38 Epoch: 23 Train: 76.53% Test: 72.37%
-# 05-08 23:38 Epoch: 24 Train: 76.92% Test: 72.81%
-# 05-08 23:38 Epoch: 25 Train: 76.89% Test: 73.11%
-# 05-08 23:38 Epoch: 26 Train: 78.85% Test: 73.07%
-# 05-08 23:39 Epoch: 27 Train: 79.89% Test: 73.22%
-# 05-08 23:39 Epoch: 28 Train: 79.83% Test: 73.59%
-# 05-08 23:39 Epoch: 29 Train: 80.04% Test: 74.04%
-# 05-08 23:39 Epoch: 30 Train: 81.19% Test: 72.96%
-# 05-08 23:39 Epoch: 31 Train: 82.05% Test: 73.52%
-# 05-08 23:39 Epoch: 32 Train: 82.09% Test: 73.93%
-# 05-08 23:39 Epoch: 33 Train: 82.78% Test: 74.19%
-# 05-08 23:40 Epoch: 34 Train: 83.35% Test: 74.41%
-# 05-08 23:40 Epoch: 35 Train: 83.23% Test: 73.70%
-# 05-08 23:40 Epoch: 36 Train: 83.90% Test: 74.22%
-# 05-08 23:40 Epoch: 37 Train: 84.28% Test: 73.96%
-# 05-08 23:40 Epoch: 38 Train: 84.69% Test: 74.30%
-# 05-08 23:40 Epoch: 39 Train: 85.88% Test: 74.78%
-# 05-08 23:41 Epoch: 40 Train: 86.20% Test: 75.11%
-# 05-08 23:41 Epoch: 41 Train: 86.66% Test: 74.37%
-# 05-08 23:41 Epoch: 42 Train: 87.15% Test: 74.85%
-# 05-08 23:41 Epoch: 43 Train: 87.64% Test: 75.15%
-# 05-08 23:41 Epoch: 44 Train: 87.76% Test: 75.41%
-# 05-08 23:41 Epoch: 45 Train: 87.85% Test: 75.59%
-# 05-08 23:41 Epoch: 46 Train: 89.20% Test: 75.37%
-# 05-08 23:42 Epoch: 47 Train: 88.59% Test: 75.81%
-# 05-08 23:42 Epoch: 48 Train: 88.66% Test: 76.07%
-# 05-08 23:42 Epoch: 49 Train: 89.80% Test: 75.52%
-# 05-08 23:42 Epoch: 50 Train: 89.76% Test: 75.81%
-
 class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
@@ -78,15 +27,34 @@ class Model(object):
     embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
     pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
     pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
-    # rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
+    rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
 
+    # def slide_window(x, k):
+    #   hk = k // 2 # half k
+    #   x_pad = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*(k-1)
+    #   x_k = tf.map_fn(lambda i: x_pad[:, i:i+k], tf.range(n), dtype=tf.int32)
+    #   return tf.stack(tf.unstack(x_k), axis=1)# bz, n, k
+    
+    # x_3 = slide_window(in_x, 3)
+    
     # embdding lookup
     e1 = tf.nn.embedding_lookup(embed, in_e1, name='e1')# bz,dw
     e2 = tf.nn.embedding_lookup(embed, in_e2, name='e2')# bz,dw
     x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
+    # x_3 = tf.nn.embedding_lookup(embed, x_3, name='x_3')
     dist1 = tf.nn.embedding_lookup(pos1_embed, in_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
     # y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
+
+    # # input attention
+    # x_3 = tf.reshape(x_3, [bz, n, 3*dw])
+    # A1 = tf.matmul(x_3, tf.reshape(e1, [bz, 3*dw, 1]))# bz, n, 1
+    # A2 = tf.matmul(x_3, tf.reshape(e2, [bz, 3*dw, 1]))
+    # A1 = tf.reshape(A1, [bz, n])
+    # A2 = tf.reshape(A2, [bz, n])
+    # alpha1 = tf.nn.softmax(A1)# bz, n
+    # alpha2 = tf.nn.softmax(A2)# bz, n
+    # alpha = (alpha1 + alpha2)/2
 
     # convolution
     # x: (batch_size, max_len, embdding_size, 1)
@@ -107,15 +75,31 @@ class Model(object):
 
         h = tf.nn.tanh(tf.nn.bias_add(conv,b),name="h") # bz, n, 1, dc
 
-        # max pooling
-        pooled = tf.nn.max_pool(h,
-                            ksize=[1,n,1,1],
-                            strides=[1,n,1,1],
-                            padding="SAME"
-              )
-        pooled_outputs.append(pooled)
-    h_pool = tf.concat(pooled_outputs, 3)
-    h_pool_flat = tf.reshape(h_pool,[-1,dc*len(filter_sizes)])
+        # conv = tf.multiply(tf.reshape(h, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+        # h = tf.reshape(conv, [bz, n, 1, dc])
+
+        # U: [dc, dc]
+        R = tf.reshape(h, [bz, n, dc])
+        U = tf.get_variable(initializer=initializer,shape=[dc,dc],name='U')
+        G = tf.matmul(tf.reshape(R, [bz*n, dc]), U)
+        G = tf.matmul(G, tf.transpose(rel_embed)) 
+        G = tf.reshape(G, [bz, n, nr])
+        AP = tf.nn.softmax(G, dim=1)# attention pooling tensor
+
+        wo = tf.matmul(tf.transpose(R, perm=[0, 2, 1]),AP)# (bz, dc, nr)
+        wo = tf.reduce_max(wo, axis=-1) # (bz, dc)
+        pooled_outputs.append(wo)
+
+        # # max pooling
+        # pooled = tf.nn.max_pool(h,
+        #                     ksize=[1,n,1,1],
+        #                     strides=[1,n,1,1],
+        #                     padding="SAME"
+        #       )
+        # pooled_outputs.append(pooled)
+    # h_pool = tf.concat(pooled_outputs, 3)
+    # h_pool_flat = tf.reshape(h_pool,[-1,dc*len(filter_sizes)])
+    h_pool_flat = tf.concat(pooled_outputs, -1)
 
     # e embdding
     e_flat = tf.concat([e1, e2], 2)

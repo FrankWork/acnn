@@ -96,6 +96,10 @@ def vectorize(data, word_dict, max_len):
     # e1_vec.append(vec[pos1[1]])
     # e2_vec.append(vec[pos2[1]])
 
+    # first position of e1 and e2
+    # e1_vec.append(pos1[0])
+    # e2_vec.append(pos2[0])
+
     # 3 word window of e1 or e2
     def e_vec_f(pos):
       e_tmp = []
@@ -115,6 +119,8 @@ def vectorize(data, word_dict, max_len):
       return e_tmp
     e1_vec.append(e_vec_f(pos1))
     e2_vec.append(e_vec_f(pos2))
+
+    
 
 
 
