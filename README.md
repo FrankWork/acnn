@@ -17,3 +17,5 @@ Epoch: 10 Train: 59.44% Test: 65.15%
 Epoch: 50 Train: 89.76% Test: 75.81%
 
 ```
+
+The performance is not so good as in the paper. Details in `log.txt`
