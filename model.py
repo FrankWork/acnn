@@ -4,6 +4,7 @@ class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
     n = config.max_len
+    k = config.slide_window
     dw = config.embedding_size
     dp = config.pos_embed_size
     d = dw+2*dp
@@ -40,24 +41,24 @@ class Model(object):
       dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
       y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
-      x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
-                        [bz,n,d,1])
-
-      # def slide_window(x, k):
-      #   hk = k // 2 # half k
-      #   x_pad = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*(k-1)
-      #   x_k = tf.map_fn(lambda i: x_pad[:, i:i+k], tf.range(n), dtype=tf.int32)
-      #   return tf.stack(tf.unstack(x_k), axis=1)# bz, n, k
-      
-      # x_k = slide_window(x, k)
-      # dist1_k = slide_window(dist1, k)
-      # dist2_k = slide_window(dist2, k)
-      # x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
-      # dist1 = tf.nn.embedding_lookup(pos1_embed, in_dist1, name='dist1')#bz, n, k,dp
-      # dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
-
       # x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
       #                   [bz,n,d,1])
+
+      def slide_window(x, k):
+        hk = k // 2 # half k
+        x_pad = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*(k-1)
+        x_k = tf.map_fn(lambda i: x_pad[:, i:i+k], tf.range(n), dtype=tf.int32)
+        return tf.stack(tf.unstack(x_k), axis=1)# bz, n, k
+      
+      x_k = slide_window(in_x, k)
+      dist1_k = slide_window(in_dist1, k)
+      dist2_k = slide_window(in_dist2, k)
+      x_k = tf.nn.embedding_lookup(embed, x_k, name='x')   # bz,n,k, dw
+      dist1_k = tf.nn.embedding_lookup(pos1_embed, dist1_k, name='dist1')#bz, n, k,dp
+      dist2_k = tf.nn.embedding_lookup(pos2_embed, dist2_k, name='dist2')# bz, n, k,dp
+
+      x_concat = tf.reshape(tf.concat([x_k, dist1_k, dist2_k], -1), # bz, n, k, d
+                        [bz,n,k*d])
 
       if is_training and keep_prob < 1:
         x_concat = tf.nn.dropout(x_concat, keep_prob)
@@ -122,26 +123,31 @@ class Model(object):
     with tf.name_scope('convolution'):
       # x: (batch_size, max_len, embdding_size, 1)
       # w: (filter_size, embdding_size, 1, num_filters)
-      w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
-      b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-      conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
-      R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
-
-      R = tf.reshape(R, [bz, n, dc])      
-      R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
-      
-      
-
       # w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
       # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       # conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
       # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
-      # # R = tf.multiply(tf.reshape(R, [bz, n, dc]), tf.reshape(alpha, [bz, n, 1])) # bz, n, 1, dc
-      # R = tf.reshape(R, [bz, n, dc])
+
+      # R = tf.reshape(R, [bz, n, dc])      
+      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+      
+      
+      # conv with explicit slide window
+      R = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
+
+      w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
+      b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      conv = tf.matmul(tf.reshape(R, [bz*n, k*d]), w)
+
+      R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
+
+      R = tf.reshape(R, [bz, n, dc])
+      
     
     self.l2_loss += tf.nn.l2_loss(w)
     self.l2_loss += tf.nn.l2_loss(b)
     return R
+
   def _attentive_pooling(self, R, rel_embed, initializer=None):
     bz = self.config.batch_size
     n = self.config.max_len
