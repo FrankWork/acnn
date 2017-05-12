@@ -42,7 +42,23 @@ class Model(object):
 
       x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
                         [bz,n,d,1])
-    
+
+      # def slide_window(x, k):
+      #   hk = k // 2 # half k
+      #   x_pad = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*(k-1)
+      #   x_k = tf.map_fn(lambda i: x_pad[:, i:i+k], tf.range(n), dtype=tf.int32)
+      #   return tf.stack(tf.unstack(x_k), axis=1)# bz, n, k
+      
+      # x_k = slide_window(x, k)
+      # dist1_k = slide_window(dist1, k)
+      # dist2_k = slide_window(dist2, k)
+      # x = tf.nn.embedding_lookup(embed, in_x, name='x')   # bz,n,dw
+      # dist1 = tf.nn.embedding_lookup(pos1_embed, in_dist1, name='dist1')#bz, n, k,dp
+      # dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
+
+      # x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
+      #                   [bz,n,d,1])
+
       if is_training and keep_prob < 1:
         x_concat = tf.nn.dropout(x_concat, keep_prob)
 
