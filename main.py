@@ -21,12 +21,19 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
   for batch in batch_iter:
     step += 1
     batch = (x for x in zip(*batch))
-    sents, relations, e1, e2, dist1, dist2 = batch
+    sents, slen, relations, e1, e2, dist1, dist2 = batch
     # sents is a list of np.ndarray, convert it to a single np.ndarray
     sents = np.vstack(sents)
 
-    in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
-    feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
+    
+    # print('to here')
+    # # print(slen.shape)
+    # print(slen[:10])
+    # print('pass here')
+    # exit()
+
+    in_x, in_len, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
+    feed_dict = {in_x: sents, in_len:slen, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
     if is_training:
       _, _, acc, loss = session.run([model.train_op, model.reg_op, model.acc, model.loss], feed_dict=feed_dict)
@@ -85,12 +92,12 @@ def init():
   logging.info(flag_str)
 
   # vectorize data
-  # vec = (sents_vec, relations, e1_vec, e2_vec, dist1, dist2)
   max_len_train = len(max(train_data[0], key=lambda x:len(x)))
   max_len_test = len(max(test_data[0], key=lambda x:len(x)))
   max_len = max(max_len_train, max_len_test)
   config.max_len = max_len
 
+  # vec = (sents_vec, sents_len, relations, e1_vec, e2_vec, dist1, dist2)
   train_vec = utils.vectorize(train_data, word_dict, max_len)
   test_vec = utils.vectorize(test_data, word_dict, max_len)
 

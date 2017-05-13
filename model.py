@@ -1,5 +1,22 @@
 import tensorflow as tf
 
+# 05-13 11:27 Epoch: 1 Train: 21.86% Test: 47.67%
+# 05-13 11:28 Epoch: 2 Train: 45.29% Test: 59.96%
+# 05-13 11:29 Epoch: 3 Train: 55.65% Test: 66.56%
+# 05-13 11:30 Epoch: 4 Train: 62.55% Test: 68.96%
+# 05-13 11:31 Epoch: 5 Train: 66.81% Test: 69.93%
+# 05-13 11:31 Epoch: 6 Train: 70.62% Test: 71.26%
+# 05-13 11:32 Epoch: 7 Train: 73.39% Test: 71.56%
+# 05-13 11:33 Epoch: 8 Train: 75.75% Test: 71.93%
+# 05-13 11:34 Epoch: 9 Train: 78.51% Test: 72.59%
+# 05-13 11:35 Epoch: 10 Train: 80.95% Test: 72.44%
+# 05-13 11:36 Epoch: 11 Train: 83.14% Test: 71.74%
+# 05-13 11:37 Epoch: 12 Train: 85.89% Test: 71.59%
+# 05-13 11:38 Epoch: 13 Train: 87.24% Test: 70.89%
+# 05-13 11:38 Epoch: 14 Train: 89.69% Test: 70.63%
+# 05-13 11:39 Epoch: 15 Train: 91.53% Test: 71.07%
+# 05-13 11:40 Epoch: 16 Train: 93.14% Test: 70.59%
+
 def _bi_rnn(config, inputs, seq_len, is_training=True, scope=None):
   '''
   return value:
@@ -36,15 +53,15 @@ class Model(object):
 
     # input
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
-    # in_len = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_len') # real length of each sentences
+    in_len = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_len') # real length of each sentences
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz, 3], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz, 3], name='in_e2')
     in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist1')
     in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist2')
     in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y') # relations
     
-    # self.inputs = (in_x, in_len, in_e1, in_e2, in_dist1, in_dist2, in_y)
-    self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
+    self.inputs = (in_x, in_len, in_e1, in_e2, in_dist1, in_dist2, in_y)
+    # self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     # embeddings
     initializer = tf.truncated_normal_initializer(stddev=0.1)
@@ -71,7 +88,6 @@ class Model(object):
     # y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
     x_concat = tf.concat([x, dist1, dist2], -1) # bz, n, d
 
-
     # # input attention
     # x_3 = tf.reshape(x_3, [bz, n, 3*dw])
     # A1 = tf.matmul(x_3, tf.reshape(e1, [bz, 3*dw, 1]))# bz, n, 1
@@ -85,13 +101,15 @@ class Model(object):
 
 
     # bidirectional rnn
-    # output_rnn, state_rnn = _bi_rnn(config, x_concat, in_len, is_training, 'rnn')
-    # x_rnn = tf.concat([output_rnn[0], output_rnn[1]], axis=2) # xi = (fw_hi, bw_hi), shape: (bz, n, hz)
+    output_rnn, state_rnn = _bi_rnn(config, x_concat, in_len, is_training, 'rnn')
+    x_rnn = tf.concat([output_rnn[0], output_rnn[1]], axis=2) # xi = (fw_hi, bw_hi), shape: (bz, n, hz)
+    d = hz*2 # dw+2*dp => hz*2
+    x_concat = tf.reshape(x_rnn, [bz,n,d,1])
+    # print(x_concat.get_shape())
+    # exit()
     
-    # d = hz # dw+2*dp => hz
-    # x_concat = tf.reshape(x_rnn, [bz,n,d,1])
 
-    x_concat = tf.reshape(x_concat, [bz,n,d,1])
+    # x_concat = tf.reshape(x_concat, [bz,n,d,1])
 
     # convolution
     # x: (batch_size, max_len, embdding_size, 1)

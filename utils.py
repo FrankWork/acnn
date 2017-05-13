@@ -70,14 +70,15 @@ def vectorize(data, word_dict, max_len):
   
   num_data = len(sentences)
   sents_vec = np.zeros((num_data, max_len), dtype=int)
-
+  sents_len = []
+  # mb_len1 = [len(seq) for seq in mb_x1]
   logging.debug('data shape: (%d, %d)' % (num_data, max_len))
   
 
   for idx, (sent, pos1, pos2) in enumerate(zip(sentences, e1_pos, e2_pos)):
     vec = [word_dict[w] if w in word_dict else 0 for w in sent]
     sents_vec[idx, :len(vec)] = vec
-    
+    sents_len.append(len(vec))
     # # log e1 and e2 if e1 or e2 is a phrase
     # if pos1[0]!=pos1[1] or pos2[0]!=pos2[1]:
     #   s_e1 = ''
@@ -135,7 +136,7 @@ def vectorize(data, word_dict, max_len):
     dist1.append([pos(p1[1]-idx) for idx, _ in enumerate(sent)])
     dist2.append([pos(p2[1]-idx) for idx, _ in enumerate(sent)])
   
-  return sents_vec, relations, e1_vec, e2_vec, dist1, dist2
+  return sents_vec, sents_len, relations, e1_vec, e2_vec, dist1, dist2
 
 def pos(x):
   '''
