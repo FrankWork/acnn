@@ -30,6 +30,9 @@ tf.app.flags.DEFINE_integer("num_filters", 100,
                             "How many features a convolution op have to output")
 tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 
+tf.app.flags.DEFINE_integer("hidden_size", 128, "Hidden size of RNN units")
+tf.app.flags.DEFINE_integer("num_layers", 1, "Number of RNN layers")
+
 # Optimization details
 tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 100, "Number of epoches")

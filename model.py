@@ -1,5 +1,25 @@
 import tensorflow as tf
 
+def _bi_rnn(config, inputs, seq_len, is_training=True, scope=None):
+  '''
+  return value:
+    output:(output_fw, output_bw) [batch_size, max_time, hidden_size]
+    state: (state_fw, state_bw) ([batch_size, hidden_size], ...) len() == num_layers
+  '''
+  def gru_cell():
+    return tf.contrib.rnn.GRUCell(config.hidden_size)
+  cell = gru_cell
+  if is_training and config.keep_prob < 1:
+    def cell():
+      return tf.contrib.rnn.DropoutWrapper(
+            gru_cell(), output_keep_prob=config.keep_prob)
+  cell_fw = tf.contrib.rnn.MultiRNNCell([cell() for _ in range(config.num_layers)] )
+  cell_bw = tf.contrib.rnn.MultiRNNCell([cell() for _ in range(config.num_layers)] )
+
+  return tf.nn.bidirectional_dynamic_rnn(cell_fw, cell_bw, inputs, 
+                          sequence_length=seq_len, dtype=tf.float32, scope=scope)
+
+
 class Model(object):
   def __init__(self, config, embeddings, is_training=True):
     bz = config.batch_size
@@ -7,6 +27,8 @@ class Model(object):
     dp = config.pos_embed_size
     np = config.pos_embed_num
     n = config.max_len
+    d = dw+2*dp
+    hz = config.hidden_size
     # k = config.slide_window
     dc = config.num_filters
     nr = config.classnum # number of relations
@@ -14,12 +36,14 @@ class Model(object):
 
     # input
     in_x = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_x') # sentences
+    # in_len = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_len') # real length of each sentences
     in_e1 = tf.placeholder(dtype=tf.int32, shape=[bz, 3], name='in_e1')
     in_e2 = tf.placeholder(dtype=tf.int32, shape=[bz, 3], name='in_e2')
     in_dist1 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist1')
     in_dist2 = tf.placeholder(dtype=tf.int32, shape=[bz,n], name='in_dist2')
     in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y') # relations
     
+    # self.inputs = (in_x, in_len, in_e1, in_e2, in_dist1, in_dist2, in_y)
     self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     # embeddings
@@ -45,6 +69,8 @@ class Model(object):
     dist1 = tf.nn.embedding_lookup(pos1_embed, in_dist1, name='dist1')#bz, n, k,dp
     dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
     # y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
+    x_concat = tf.concat([x, dist1, dist2], -1) # bz, n, d
+
 
     # # input attention
     # x_3 = tf.reshape(x_3, [bz, n, 3*dw])
@@ -56,22 +82,30 @@ class Model(object):
     # alpha2 = tf.nn.softmax(A2)# bz, n
     # alpha = (alpha1 + alpha2)/2
 
+
+
+    # bidirectional rnn
+    # output_rnn, state_rnn = _bi_rnn(config, x_concat, in_len, is_training, 'rnn')
+    # x_rnn = tf.concat([output_rnn[0], output_rnn[1]], axis=2) # xi = (fw_hi, bw_hi), shape: (bz, n, hz)
+    
+    # d = hz # dw+2*dp => hz
+    # x_concat = tf.reshape(x_rnn, [bz,n,d,1])
+
+    x_concat = tf.reshape(x_concat, [bz,n,d,1])
+
     # convolution
     # x: (batch_size, max_len, embdding_size, 1)
     # w: (filter_size, embdding_size, 1, num_filters)
-    d = dw+2*dp
     filter_sizes = [3, 4, 5]
     pooled_outputs = []
-    x_conv = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
-                            [bz,n,d,1])
     if is_training and keep_prob < 1:
-      x_conv = tf.nn.dropout(x_conv, keep_prob)
+      x_concat = tf.nn.dropout(x_concat, keep_prob)
 
     for i, k in enumerate(filter_sizes):
       with tf.variable_scope("conv-%d" % k):# , reuse=False
         w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
         b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-        conv = tf.nn.conv2d(x_conv, w, strides=[1,1,d,1],padding="SAME")
+        conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")
 
         h = tf.nn.tanh(tf.nn.bias_add(conv,b),name="h") # bz, n, 1, dc
 
