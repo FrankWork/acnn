@@ -41,24 +41,15 @@ class Model(object):
       dist2 = tf.nn.embedding_lookup(pos2_embed, in_dist2, name='dist2')# bz, n, k,dp
       y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
-      # x_concat = tf.reshape(tf.concat([x, dist1, dist2], -1), # bz, n, d
-      #                   [bz,n,d,1])
+      x_concat = tf.concat([x, dist1, dist2], -1) # bz, n, d
+      # x_concat = tf.reshape( x_concat, [bz,n,d,1])
 
-      def slide_window(x, k):
-        hk = k // 2 # half k
-        x_pad = tf.pad(x, [[0,0], [hk,hk]], "CONSTANT")# bz, n+2*(k-1)
-        x_k = tf.map_fn(lambda i: x_pad[:, i:i+k], tf.range(n), dtype=tf.int32)
-        return tf.stack(tf.unstack(x_k), axis=1)# bz, n, k
-      
-      x_k = slide_window(in_x, k)
-      dist1_k = slide_window(in_dist1, k)
-      dist2_k = slide_window(in_dist2, k)
-      x_k = tf.nn.embedding_lookup(embed, x_k, name='x')   # bz,n,k, dw
-      dist1_k = tf.nn.embedding_lookup(pos1_embed, dist1_k, name='dist1')#bz, n, k,dp
-      dist2_k = tf.nn.embedding_lookup(pos2_embed, dist2_k, name='dist2')# bz, n, k,dp
-
-      x_concat = tf.reshape(tf.concat([x_k, dist1_k, dist2_k], -1), # bz, n, k, d
-                        [bz,n,k*d])
+      # slide window
+      hk = k // 2 # half k
+      x_pad = tf.pad(x_concat, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
+      x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
+      x_k = tf.stack(tf.unstack(x_k), axis=2)
+      x_concat = tf.reshape(x_k, [bz,n, k*d])
 
       if is_training and keep_prob < 1:
         x_concat = tf.nn.dropout(x_concat, keep_prob)
@@ -133,14 +124,12 @@ class Model(object):
       
       
       # conv with explicit slide window
-      R = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
-
+      R = x_concat
+      # R = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
       w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       conv = tf.matmul(tf.reshape(R, [bz*n, k*d]), w)
-
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
-
       R = tf.reshape(R, [bz, n, dc])
       
     

@@ -46,6 +46,27 @@ attentive pooling
 05-10 14:23 Epoch: 21 Train: 89.39% Test: 68.11%
 05-10 14:23 Epoch: 22 Train: 90.54% Test: 69.22%
 
+
+05-13 23:42 Epoch: 1 Train: 18.18% Test: 25.11%
+05-13 23:42 Epoch: 2 Train: 31.77% Test: 32.63%
+05-13 23:43 Epoch: 3 Train: 36.60% Test: 33.00%
+05-13 23:43 Epoch: 4 Train: 38.15% Test: 37.78%
+05-13 23:44 Epoch: 5 Train: 40.84% Test: 37.30%
+05-13 23:44 Epoch: 6 Train: 42.30% Test: 37.93%
+05-13 23:45 Epoch: 7 Train: 44.25% Test: 40.07%
+05-13 23:45 Epoch: 8 Train: 50.36% Test: 49.89%
+05-13 23:45 Epoch: 9 Train: 57.69% Test: 53.30%
+05-13 23:46 Epoch: 10 Train: 61.74% Test: 55.30%
+05-13 23:46 Epoch: 11 Train: 65.40% Test: 57.37%
+05-13 23:47 Epoch: 12 Train: 68.12% Test: 58.07%
+05-13 23:47 Epoch: 13 Train: 70.17% Test: 58.85%
+05-13 23:48 Epoch: 14 Train: 72.30% Test: 58.30%
+05-13 23:48 Epoch: 15 Train: 73.96% Test: 60.07%
+05-13 23:48 Epoch: 16 Train: 76.48% Test: 60.26%
+05-13 23:49 Epoch: 17 Train: 78.47% Test: 60.48%
+05-13 23:49 Epoch: 18 Train: 80.30% Test: 59.89%
+
+
 input attention
   keep_prob=0.8
 

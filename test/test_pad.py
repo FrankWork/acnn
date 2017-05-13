@@ -4,17 +4,20 @@ b = 2
 n = 3
 d = 3
 k = 3
-
+hk = k // 2
 dc = 3
 
 x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
-w = tf.get_variable(initializer=tf.reshape(tf.range(k*d*dc, dtype=tf.float32),shape=[k, d, dc]),name='weight')
-conv = tf.nn.conv2d(tf.reshape(x, [b,n,d,1]), 
-                    tf.reshape(w, [k,d, 1,dc]),
-                    strides=[1,1,d,1], 
-                    padding="SAME")
+x_pad = tf.pad(x, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
+x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
+x_k = tf.stack(tf.unstack(x_k), axis=2)
+# x_k = tf.reshape(x_k, [b,n, k*d])
 
-y = tf.reshape(conv, [b, n, dc])
+w = tf.get_variable(initializer=tf.reshape(tf.range(k*d*dc, dtype=tf.float32),shape=[k*d, dc]),name='weight')
+
+y = tf.matmul(tf.reshape(x_k, [b*n, k*d]),w)
+y = tf.reshape(y,[b, n, dc])
+
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
@@ -25,7 +28,6 @@ with tf.Session() as session:
   print(w)
   print('*' * 10)
   print(y)
-
 
 # [[[  300.   315.   330.]
 #   [  612.   648.   684.]
