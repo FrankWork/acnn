@@ -7,30 +7,40 @@ k = 3
 hk = k // 2
 dc = 3
 
-x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
+# x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
+x = tf.truncated_normal([b, n, d])
 x_pad = tf.pad(x, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
 x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
 x_k = tf.stack(tf.unstack(x_k), axis=2)
 # x_k = tf.reshape(x_k, [b,n, k*d])
 
-w = tf.get_variable(initializer=tf.reshape(tf.range(k*d*dc, dtype=tf.float32),shape=[k*d, dc]),name='weight')
+initializer = tf.truncated_normal_initializer(stddev=0.1)
+w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
 
 y = tf.matmul(tf.reshape(x_k, [b*n, k*d]),w)
 y = tf.reshape(y,[b, n, dc])
 
-g = tf.gradients(y, tf.trainable_variables())
+
+conv = tf.nn.conv2d(tf.reshape(x, [b,n,d,1]), 
+                    tf.reshape(w, [k,d, 1,dc]),
+                    strides=[1,1,d,1], 
+                    padding="SAME")
+
+y2 = tf.reshape(conv, [b, n, dc])
+
+loss = tf.reduce_sum(tf.abs(y - y2))
+
+
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
-  x, w, y, g = session.run([x, w, y, g])
+  y, y2, loss = session.run([y, y2, loss])
   print('*' * 10)
-  print(x)
-  print('*' * 10)
-  print(w)
+  print(loss)
   print('*' * 10)
   print(y)
   print('*' * 10)
-  print(g)
+  print(y2)
 
 # [[[  300.   315.   330.]
 #   [  612.   648.   684.]

@@ -57,9 +57,10 @@ class Model(object):
       # else:
       #   R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
 
-      
-      R1 = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
-      R2 = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
+      w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
+      b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      R1 = self._standard_conv2(x_concat, w, b, alpha=alpha)
+      R2 = self._slide_conv2(x_concat, w, b, alpha=alpha)
       R = R1
       self.R = tf.reduce_sum(tf.abs(R1 - R2))
       self.R1 = R1 
@@ -157,6 +158,64 @@ class Model(object):
       x_concat = tf.reshape( x_concat, [bz,n,d,1])
       conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+
+      R = tf.reshape(R, [bz, n, dc])
+      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+    self.l2_loss += tf.nn.l2_loss(w)
+    self.l2_loss += tf.nn.l2_loss(b)
+    return R
+
+  def _slide_conv2(self, x_concat, w, b, alpha=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
+    k = self.config.slide_window
+    dw = self.config.embedding_size
+    dp = self.config.pos_embed_size
+    d = dw+2*dp
+    dc = self.config.num_filters
+
+    with tf.variable_scope('slide_conv'):
+      # conv with explicit slide window
+
+      # slide window
+      hk = k // 2 # half k
+      x_pad = tf.pad(x_concat, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
+      x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
+      x_k = tf.stack(tf.unstack(x_k), axis=2)
+      x_concat = tf.reshape(x_k, [bz,n, k*d])
+
+      # x_concat = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
+      # w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
+      # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      w = tf.reshape(w, [k*d, dc])
+      conv = tf.matmul(tf.reshape(x_concat, [bz*n, k*d]), w)
+      # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
+      R = conv
+      R = tf.reshape(R, [bz, n, dc])
+      
+    
+    self.l2_loss += tf.nn.l2_loss(w)
+    self.l2_loss += tf.nn.l2_loss(b)
+    return R
+
+  def _standard_conv2(self, x_concat, w, b, alpha=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
+    k = self.config.slide_window
+    dw = self.config.embedding_size
+    dp = self.config.pos_embed_size
+    d = dw+2*dp
+    dc = self.config.num_filters
+    with tf.variable_scope('std_conv'):
+      # x: (batch_size, max_len, embdding_size, 1)
+      # w: (filter_size, embdding_size, 1, num_filters)
+      # w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
+      # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      w = tf.reshape(w, [k,d,1,dc])
+      x_concat = tf.reshape( x_concat, [bz,n,d,1])
+      conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
+      # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+      R = conv
 
       R = tf.reshape(R, [bz, n, dc])
       # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
