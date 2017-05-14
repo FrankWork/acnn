@@ -16,15 +16,19 @@ conv = tf.nn.conv2d(tf.reshape(x, [b,n,d,1]),
 
 y = tf.reshape(conv, [b, n, dc])
 
+g = tf.gradients(y, tf.trainable_variables())
+
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
-  x, w, y = session.run([x, w, y])
+  x, w, y, g = session.run([x, w, y, g])
   print('*' * 10)
   print(x)
   print('*' * 10)
   print(w)
   print('*' * 10)
   print(y)
+  print('*' * 10)
+  print(g)
 
 
 # [[[  300.   315.   330.]

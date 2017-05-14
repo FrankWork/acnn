@@ -28,6 +28,11 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     in_x, in_e1, in_e2, in_dist1, in_dist2, in_y = model.inputs
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
+    
+    R = session.run([model.R], feed_dict=feed_dict)
+    logging.info(R)
+    exit()
+
     if is_training:
       _, _, acc, loss = session.run([model.train_op, model.reg_op, model.acc, model.loss], feed_dict=feed_dict)
       acc_count += acc
@@ -125,7 +130,7 @@ def main(_):
         for epoch in range(config.num_epoches):
           # lr_decay = config.lr_decay ** max(i + 1 - config.max_epoch, 0.0)
           # m.assign_lr(session, config.learning_rate * lr_decay)
-          train_iter = utils.batch_iter(list(zip(*train_vec)), bz, shuffle=True)
+          train_iter = utils.batch_iter(list(zip(*train_vec)), bz, shuffle=config.shuffle)
           test_iter = utils.batch_iter(list(zip(*test_vec)), bz, shuffle=False)
           train_acc = run_epoch(session, m_train, train_iter, verbose=False)
           test_acc = run_epoch(session, m_test, test_iter, is_training=False)

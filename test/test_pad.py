@@ -18,16 +18,19 @@ w = tf.get_variable(initializer=tf.reshape(tf.range(k*d*dc, dtype=tf.float32),sh
 y = tf.matmul(tf.reshape(x_k, [b*n, k*d]),w)
 y = tf.reshape(y,[b, n, dc])
 
+g = tf.gradients(y, tf.trainable_variables())
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
-  x, w, y = session.run([x, w, y])
+  x, w, y, g = session.run([x, w, y, g])
   print('*' * 10)
   print(x)
   print('*' * 10)
   print(w)
   print('*' * 10)
   print(y)
+  print('*' * 10)
+  print(g)
 
 # [[[  300.   315.   330.]
 #   [  612.   648.   684.]
@@ -36,3 +39,15 @@ with tf.Session() as session:
 #  [[ 1191.  1260.  1329.]
 #   [ 1584.  1701.  1818.]
 #   [  705.   792.   879.]]]
+
+# **********
+# [array([[ 24.,  24.,  24.],
+#        [ 28.,  28.,  28.],
+#        [ 32.,  32.,  32.],
+#        [ 45.,  45.,  45.],
+#        [ 51.,  51.,  51.],
+#        [ 57.,  57.,  57.],
+#        [ 36.,  36.,  36.],
+#        [ 40.,  40.,  40.],
+#        [ 44.,  44.,  44.]], dtype=float32)]
+

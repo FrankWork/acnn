@@ -2,10 +2,9 @@ import tensorflow as tf
 
 
 # Basics
-# tf.app.flags.DEFINE_boolean("debug", True,
-#                             "run in the debug mode.")
 tf.app.flags.DEFINE_boolean("test_only", False,
                             "no need to run training process.")
+tf.app.flags.DEFINE_boolean("shuffle", False, "shuffle the training data.")
 
 # Data files
 tf.app.flags.DEFINE_string("data_path", "data/", "Data directory")
@@ -29,9 +28,10 @@ tf.app.flags.DEFINE_integer("slide_window", 3, "Slide window size")
 tf.app.flags.DEFINE_integer("num_filters", 100, 
                             "How many features a convolution op have to output")
 tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
+tf.app.flags.DEFINE_boolean("standard_conv", True, "tf standard conv op.")
 
 # Optimization details
-tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
+tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 100, "Number of epoches")
 tf.app.flags.DEFINE_float("keep_prob", 1.0, "Dropout keep prob.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-3, "Learning rate.")

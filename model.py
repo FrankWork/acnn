@@ -25,10 +25,12 @@ class Model(object):
       self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
     
     with tf.name_scope('embeddings'):
-      initializer = tf.truncated_normal_initializer(stddev=0.1)
+      # initializer = tf.truncated_normal_initializer(stddev=0.1)
+      initializer = tf.ones_initializer()
+
       embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
-      pos1_embed = tf.get_variable(shape=[np, dp],name='position1_embed')
-      pos2_embed = tf.get_variable(shape=[np, dp],name='position2_embed')
+      pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
+      pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
       # pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
       # pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
       rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
@@ -42,15 +44,6 @@ class Model(object):
       y = tf.nn.embedding_lookup(rel_embed, in_y, name='y')# bz, dc
 
       x_concat = tf.concat([x, dist1, dist2], -1) # bz, n, d
-      # x_concat = tf.reshape( x_concat, [bz,n,d,1])
-
-      # slide window
-      hk = k // 2 # half k
-      x_pad = tf.pad(x_concat, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
-      x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
-      x_k = tf.stack(tf.unstack(x_k), axis=2)
-      x_concat = tf.reshape(x_k, [bz,n, k*d])
-
       if is_training and keep_prob < 1:
         x_concat = tf.nn.dropout(x_concat, keep_prob)
 
@@ -58,12 +51,16 @@ class Model(object):
     
     with tf.name_scope('forword'):
       alpha = self._input_attention(x, e1, e2, initializer=initializer)
-      R = self._convolution(x_concat, initializer=initializer, alpha=alpha)
+      if config.standard_conv:
+        R = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
+      else:
+        R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
       wo = self._attentive_pooling(R, rel_embed, initializer=initializer)
 
       if is_training and keep_prob < 1:
         wo = tf.nn.dropout(wo, keep_prob)
       
+      self.R = R
       self._loss_and_train(wo, rel_embed, in_y, y, is_training)
 
     
@@ -102,7 +99,7 @@ class Model(object):
       
       return alpha
 
-  def _convolution(self, x_concat, initializer=None, alpha=None):
+  def _slide_conv(self, x_concat, initializer=None, alpha=None):
     bz = self.config.batch_size
     n = self.config.max_len
     k = self.config.slide_window
@@ -112,27 +109,46 @@ class Model(object):
     dc = self.config.num_filters
 
     with tf.name_scope('convolution'):
-      # x: (batch_size, max_len, embdding_size, 1)
-      # w: (filter_size, embdding_size, 1, num_filters)
-      # w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
-      # b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-      # conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
-      # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
-
-      # R = tf.reshape(R, [bz, n, dc])      
-      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
-      
-      
       # conv with explicit slide window
-      R = x_concat
+
+      # slide window
+      hk = k // 2 # half k
+      x_pad = tf.pad(x_concat, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
+      x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
+      x_k = tf.stack(tf.unstack(x_k), axis=2)
+      x_concat = tf.reshape(x_k, [bz,n, k*d])
+
       # R = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
       w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
-      conv = tf.matmul(tf.reshape(R, [bz*n, k*d]), w)
+      conv = tf.matmul(tf.reshape(x_concat, [bz*n, k*d]), w)
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
       R = tf.reshape(R, [bz, n, dc])
       
     
+    self.l2_loss += tf.nn.l2_loss(w)
+    self.l2_loss += tf.nn.l2_loss(b)
+    return R
+
+  def _standard_conv(self, x_concat, initializer=None, alpha=None):
+    bz = self.config.batch_size
+    n = self.config.max_len
+    k = self.config.slide_window
+    dw = self.config.embedding_size
+    dp = self.config.pos_embed_size
+    d = dw+2*dp
+    dc = self.config.num_filters
+    with tf.name_scope('convolution'):
+      # x: (batch_size, max_len, embdding_size, 1)
+      # w: (filter_size, embdding_size, 1, num_filters)
+      w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')
+      b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
+      x_concat = tf.reshape( x_concat, [bz,n,d,1])
+      conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
+      R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
+
+      R = tf.reshape(R, [bz, n, dc])
+      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
     self.l2_loss += tf.nn.l2_loss(w)
     self.l2_loss += tf.nn.l2_loss(b)
     return R
