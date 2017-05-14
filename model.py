@@ -23,14 +23,14 @@ class Model(object):
       in_y = tf.placeholder(dtype=tf.int32, shape=[bz], name='in_y') # relations
       
       self.inputs = (in_x, in_e1, in_e2, in_dist1, in_dist2, in_y)
+
+      initializer = tf.truncated_normal_initializer(stddev=0.1)
+      # initializer = tf.ones_initializer()
     
     with tf.name_scope('embeddings'):
-      # initializer = tf.truncated_normal_initializer(stddev=0.1)
-      initializer = tf.ones_initializer()
-
       embed = tf.get_variable(initializer=embeddings, dtype=tf.float32, name='word_embed')
-      pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
-      pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
+      pos1_embed = tf.get_variable(shape=[np, dp],name='position1_embed')
+      pos2_embed = tf.get_variable(shape=[np, dp],name='position2_embed')
       # pos1_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position1_embed')
       # pos2_embed = tf.get_variable(initializer=initializer,shape=[np, dp],name='position2_embed')
       rel_embed = tf.get_variable(initializer=initializer,shape=[nr, dc],name='relation_embed')
@@ -51,16 +51,27 @@ class Model(object):
     
     with tf.name_scope('forword'):
       alpha = self._input_attention(x, e1, e2, initializer=initializer)
-      if config.standard_conv:
-        R = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
-      else:
-        R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
+
+      # if config.standard_conv:
+      #   R = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
+      # else:
+      #   R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
+
+      
+      R1 = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
+      R2 = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
+      R = R1
+      self.R = tf.reduce_sum(tf.abs(R1 - R2))
+      self.R1 = R1 
+      self.R2 = R2 
+
+
       wo = self._attentive_pooling(R, rel_embed, initializer=initializer)
 
       if is_training and keep_prob < 1:
         wo = tf.nn.dropout(wo, keep_prob)
       
-      self.R = R
+      # self.R = R
       self._loss_and_train(wo, rel_embed, in_y, y, is_training)
 
     
@@ -108,7 +119,7 @@ class Model(object):
     d = dw+2*dp
     dc = self.config.num_filters
 
-    with tf.name_scope('convolution'):
+    with tf.variable_scope('slide_conv'):
       # conv with explicit slide window
 
       # slide window
@@ -118,7 +129,7 @@ class Model(object):
       x_k = tf.stack(tf.unstack(x_k), axis=2)
       x_concat = tf.reshape(x_k, [bz,n, k*d])
 
-      # R = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
+      # x_concat = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
       w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       conv = tf.matmul(tf.reshape(x_concat, [bz*n, k*d]), w)
@@ -138,7 +149,7 @@ class Model(object):
     dp = self.config.pos_embed_size
     d = dw+2*dp
     dc = self.config.num_filters
-    with tf.name_scope('convolution'):
+    with tf.variable_scope('std_conv'):
       # x: (batch_size, max_len, embdding_size, 1)
       # w: (filter_size, embdding_size, 1, num_filters)
       w = tf.get_variable(initializer=initializer,shape=[k, d, 1, dc],name='weight')

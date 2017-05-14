@@ -29,9 +29,13 @@ def run_epoch(session, model, batch_iter, is_training=True, verbose=True):
     feed_dict = {in_x: sents, in_e1: e1, in_e2: e2, in_dist1: dist1, 
                  in_dist2: dist2, in_y: relations}
     
-    R = session.run([model.R], feed_dict=feed_dict)
+    R, R1, R2 = session.run([model.R, model.R1, model.R2], feed_dict=feed_dict)
     logging.info(R)
-    exit()
+    # if R > 100:
+    #   logging.info(R1-R2)
+    if step > 20:
+      exit()
+    continue
 
     if is_training:
       _, _, acc, loss = session.run([model.train_op, model.reg_op, model.acc, model.loss], feed_dict=feed_dict)
