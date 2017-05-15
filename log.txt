@@ -119,28 +119,39 @@ input attention + attentive pooling
 
 --standard_conv=False
 
-05-15 15:14 Epoch: 1 Train: 27.60% Test: 36.33%
-05-15 15:14 Epoch: 2 Train: 44.94% Test: 41.37%
-05-15 15:14 Epoch: 3 Train: 49.11% Test: 43.11%
-05-15 15:15 Epoch: 4 Train: 51.32% Test: 45.52%
-05-15 15:15 Epoch: 5 Train: 54.46% Test: 46.67%
-05-15 15:16 Epoch: 6 Train: 57.09% Test: 47.59%
-05-15 15:16 Epoch: 7 Train: 59.50% Test: 47.52%
-05-15 15:17 Epoch: 8 Train: 61.80% Test: 48.33%
-05-15 15:17 Epoch: 9 Train: 64.40% Test: 48.85%
-05-15 15:17 Epoch: 10 Train: 67.07% Test: 49.56%
-05-15 15:18 Epoch: 11 Train: 69.14% Test: 49.59%
-05-15 15:18 Epoch: 12 Train: 71.56% Test: 49.81%
-05-15 15:19 Epoch: 13 Train: 73.35% Test: 49.81%
-05-15 15:19 Epoch: 14 Train: 75.04% Test: 50.26%
-05-15 15:19 Epoch: 15 Train: 76.28% Test: 50.89%
-05-15 15:20 Epoch: 16 Train: 77.68% Test: 52.74%
-05-15 15:20 Epoch: 17 Train: 78.76% Test: 53.74%
-05-15 15:21 Epoch: 18 Train: 80.06% Test: 53.44%
-05-15 15:21 Epoch: 19 Train: 81.26% Test: 52.63%
-05-15 15:21 Epoch: 20 Train: 82.24% Test: 52.30%
-05-15 15:22 Epoch: 21 Train: 83.04% Test: 51.67%
-05-15 15:22 Epoch: 22 Train: 83.93% Test: 51.81%
+05-15 16:36 Epoch: 1 Train: 16.09% Test: 18.15%
+05-15 16:36 Epoch: 2 Train: 28.75% Test: 22.37%
+05-15 16:37 Epoch: 3 Train: 31.06% Test: 27.15%
+05-15 16:38 Epoch: 4 Train: 30.16% Test: 27.07%
+05-15 16:39 Epoch: 5 Train: 32.77% Test: 29.07%
+05-15 16:39 Epoch: 6 Train: 34.55% Test: 21.89%
+05-15 16:40 Epoch: 7 Train: 35.50% Test: 28.22%
+05-15 16:41 Epoch: 8 Train: 37.67% Test: 27.04%
+05-15 16:41 Epoch: 9 Train: 38.79% Test: 28.37%
+05-15 16:42 Epoch: 10 Train: 38.26% Test: 29.19%
+05-15 16:43 Epoch: 11 Train: 38.12% Test: 27.33%
+05-15 16:44 Epoch: 12 Train: 39.15% Test: 32.15%
+05-15 16:44 Epoch: 13 Train: 41.51% Test: 31.63%
+05-15 16:45 Epoch: 14 Train: 42.74% Test: 28.11%
+05-15 16:46 Epoch: 15 Train: 41.83% Test: 33.52%
+05-15 16:46 Epoch: 16 Train: 44.69% Test: 32.04%
+05-15 16:47 Epoch: 17 Train: 45.05% Test: 31.78%
+05-15 16:47 Epoch: 18 Train: 45.46% Test: 34.33%
+05-15 16:48 Epoch: 19 Train: 48.69% Test: 38.07%
+05-15 16:48 Epoch: 20 Train: 50.05% Test: 36.07%
+05-15 16:49 Epoch: 21 Train: 50.26% Test: 39.19%
+05-15 16:49 Epoch: 22 Train: 52.25% Test: 33.56%
+05-15 16:50 Epoch: 23 Train: 54.26% Test: 36.85%
+05-15 16:50 Epoch: 24 Train: 58.73% Test: 38.33%
+05-15 16:51 Epoch: 25 Train: 63.86% Test: 42.00%
+05-15 16:51 Epoch: 26 Train: 69.17% Test: 42.41%
+05-15 16:51 Epoch: 27 Train: 72.72% Test: 46.22%
+05-15 16:52 Epoch: 28 Train: 75.31% Test: 48.89%
+05-15 16:53 Epoch: 29 Train: 77.90% Test: 50.85%
+05-15 16:53 Epoch: 30 Train: 79.79% Test: 52.04%
+05-15 16:54 Epoch: 31 Train: 81.56% Test: 52.44%
+05-15 16:55 Epoch: 32 Train: 83.09% Test: 52.59%
+05-15 16:55 Epoch: 33 Train: 84.54% Test: 53.00%
 
 
 

@@ -52,11 +52,12 @@ class Model(object):
     with tf.name_scope('forword'):
       alpha = self._input_attention(x, e1, e2, initializer=initializer)
 
-      if config.standard_conv:
-        R = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
-      else:
-        R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
+      # if config.standard_conv:
+      #   R = self._standard_conv(x_concat, initializer=initializer, alpha=alpha)
+      # else:
+      #   R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
 
+      R = self._slide_conv(x_concat, initializer=initializer, alpha=alpha)
       wo = self._attentive_pooling(R, rel_embed, initializer=initializer)
 
       if is_training and keep_prob < 1:
@@ -119,7 +120,8 @@ class Model(object):
       x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
       x_k = tf.stack(tf.unstack(x_k), axis=1)
       x_concat = tf.reshape(x_k, [bz,n, k*d])
-
+      
+      x_concat = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
       
       w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
@@ -127,7 +129,7 @@ class Model(object):
 
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
       R = tf.reshape(R, [bz, n, dc])
-      R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
       
     
     self.l2_loss += tf.nn.l2_loss(w)
