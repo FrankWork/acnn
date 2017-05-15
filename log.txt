@@ -46,26 +46,32 @@ attentive pooling
 05-10 14:23 Epoch: 21 Train: 89.39% Test: 68.11%
 05-10 14:23 Epoch: 22 Train: 90.54% Test: 69.22%
 
+--standard_conv=False --batch_size=8
 
-05-13 23:42 Epoch: 1 Train: 18.18% Test: 25.11%
-05-13 23:42 Epoch: 2 Train: 31.77% Test: 32.63%
-05-13 23:43 Epoch: 3 Train: 36.60% Test: 33.00%
-05-13 23:43 Epoch: 4 Train: 38.15% Test: 37.78%
-05-13 23:44 Epoch: 5 Train: 40.84% Test: 37.30%
-05-13 23:44 Epoch: 6 Train: 42.30% Test: 37.93%
-05-13 23:45 Epoch: 7 Train: 44.25% Test: 40.07%
-05-13 23:45 Epoch: 8 Train: 50.36% Test: 49.89%
-05-13 23:45 Epoch: 9 Train: 57.69% Test: 53.30%
-05-13 23:46 Epoch: 10 Train: 61.74% Test: 55.30%
-05-13 23:46 Epoch: 11 Train: 65.40% Test: 57.37%
-05-13 23:47 Epoch: 12 Train: 68.12% Test: 58.07%
-05-13 23:47 Epoch: 13 Train: 70.17% Test: 58.85%
-05-13 23:48 Epoch: 14 Train: 72.30% Test: 58.30%
-05-13 23:48 Epoch: 15 Train: 73.96% Test: 60.07%
-05-13 23:48 Epoch: 16 Train: 76.48% Test: 60.26%
-05-13 23:49 Epoch: 17 Train: 78.47% Test: 60.48%
-05-13 23:49 Epoch: 18 Train: 80.30% Test: 59.89%
+05-15 11:15 Epoch: 1 Train: 37.28% Test: 46.46%
+05-15 11:16 Epoch: 2 Train: 61.06% Test: 56.16%
+05-15 11:16 Epoch: 3 Train: 67.55% Test: 62.06%
+05-15 11:17 Epoch: 4 Train: 71.26% Test: 63.72%
+05-15 11:18 Epoch: 5 Train: 74.35% Test: 63.97%
+05-15 11:18 Epoch: 6 Train: 77.44% Test: 62.50%
+05-15 11:19 Epoch: 7 Train: 80.26% Test: 62.72%
 
+--standard_conv=False --batch_size=100
+
+05-15 11:21 Epoch: 1 Train: 24.32% Test: 22.22%
+05-15 11:22 Epoch: 2 Train: 35.35% Test: 27.93%
+05-15 11:22 Epoch: 3 Train: 38.57% Test: 29.44%
+05-15 11:23 Epoch: 4 Train: 39.42% Test: 30.63%
+05-15 11:24 Epoch: 5 Train: 41.06% Test: 29.30%
+05-15 11:25 Epoch: 6 Train: 44.66% Test: 39.93%
+05-15 11:25 Epoch: 7 Train: 56.00% Test: 54.07%
+05-15 11:26 Epoch: 8 Train: 62.50% Test: 56.93%
+05-15 11:27 Epoch: 9 Train: 65.84% Test: 60.37%
+05-15 11:27 Epoch: 10 Train: 69.51% Test: 62.56%
+05-15 11:28 Epoch: 11 Train: 71.95% Test: 62.78%
+05-15 11:29 Epoch: 12 Train: 74.05% Test: 64.00%
+05-15 11:29 Epoch: 13 Train: 75.98% Test: 65.15%
+05-15 11:30 Epoch: 14 Train: 78.03% Test: 65.59%
 
 input attention
   keep_prob=0.8
@@ -111,8 +117,21 @@ input attention + attentive pooling
 05-10 20:30 Epoch: 10 Train: 67.70% Test: 54.48%
 05-10 20:30 Epoch: 11 Train: 70.33% Test: 55.22%
 
+--standard_conv=False
 
-
+05-15 11:32 Epoch: 1 Train: 23.49% Test: 22.00%
+05-15 11:33 Epoch: 2 Train: 35.09% Test: 27.11%
+05-15 11:33 Epoch: 3 Train: 38.99% Test: 26.37%
+05-15 11:34 Epoch: 4 Train: 40.00% Test: 28.22%
+05-15 11:35 Epoch: 5 Train: 39.81% Test: 28.74%
+05-15 11:35 Epoch: 6 Train: 44.98% Test: 39.33%
+05-15 11:36 Epoch: 7 Train: 55.99% Test: 52.19%
+05-15 11:37 Epoch: 8 Train: 62.25% Test: 58.48%
+05-15 11:37 Epoch: 9 Train: 66.38% Test: 60.19%
+05-15 11:38 Epoch: 10 Train: 69.30% Test: 62.70%
+05-15 11:39 Epoch: 11 Train: 71.92% Test: 63.44%
+05-15 11:39 Epoch: 12 Train: 74.08% Test: 64.37%
+05-15 11:40 Epoch: 13 Train: 76.24% Test: 65.70%
 
 
 

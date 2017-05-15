@@ -1,23 +1,23 @@
 import tensorflow as tf
 
 b = 2
-n = 3
-d = 3
+n = 4
+d = 5
 k = 3
 hk = k // 2
 dc = 3
 
 # x = tf.reshape(tf.range(b*n*d, dtype=tf.float32), [b, n, d])
 x = tf.truncated_normal([b, n, d])
-x_pad = tf.pad(x, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
-x_k = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
-x_k = tf.stack(tf.unstack(x_k), axis=2)
-# x_k = tf.reshape(x_k, [b,n, k*d])
-
 initializer = tf.truncated_normal_initializer(stddev=0.1)
 w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
 
-y = tf.matmul(tf.reshape(x_k, [b*n, k*d]),w)
+x_pad = tf.pad(x, [[0,0], [hk, hk], [0, 0]], "CONSTANT")
+x_map = tf.map_fn(lambda i: x_pad[:, i:i+k, :], tf.range(n), dtype=tf.float32)
+x_stack = tf.stack(tf.unstack(x_map), axis=1) # (b,n,k,d)
+
+
+y = tf.matmul(tf.reshape(x_stack, [b*n, k*d]),w)
 y = tf.reshape(y,[b, n, dc])
 
 
@@ -34,13 +34,16 @@ loss = tf.reduce_sum(tf.abs(y - y2))
 
 with tf.Session() as session:
   session.run(tf.global_variables_initializer())
-  y, y2, loss = session.run([y, y2, loss])
+  xk, y, y2, loss = session.run([x_stack, y, y2, loss])
+  print('*' * 10)
+  print(xk.shape)
+  print(xk)
   print('*' * 10)
   print(loss)
-  print('*' * 10)
-  print(y)
-  print('*' * 10)
-  print(y2)
+  # print('*' * 10)
+  # print(y)
+  # print('*' * 10)
+  # print(y2)
 
 # [[[  300.   315.   330.]
 #   [  612.   648.   684.]

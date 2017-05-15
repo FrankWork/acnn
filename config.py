@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_integer("classnum", 19, "Number of relations")
 tf.app.flags.DEFINE_boolean("standard_conv", True, "tf standard conv op.")
 
 # Optimization details
-tf.app.flags.DEFINE_integer("batch_size", 8, "Batch size")
+tf.app.flags.DEFINE_integer("batch_size", 100, "Batch size")
 tf.app.flags.DEFINE_integer("num_epoches", 100, "Number of epoches")
 tf.app.flags.DEFINE_float("keep_prob", 1.0, "Dropout keep prob.")
 tf.app.flags.DEFINE_float("learning_rate", 1e-3, "Learning rate.")
