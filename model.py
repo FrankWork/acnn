@@ -120,12 +120,14 @@ class Model(object):
       x_k = tf.stack(tf.unstack(x_k), axis=1)
       x_concat = tf.reshape(x_k, [bz,n, k*d])
 
-      x_concat = tf.multiply(x_concat, tf.reshape(alpha, [bz, n, 1])) # bz, n, k*d
+      
       w = tf.get_variable(initializer=initializer,shape=[k*d, dc],name='weight')
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       conv = tf.matmul(tf.reshape(x_concat, [bz*n, k*d]), w)
+
       R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz*n, dc
       R = tf.reshape(R, [bz, n, dc])
+      R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
       
     
     self.l2_loss += tf.nn.l2_loss(w)
@@ -147,10 +149,27 @@ class Model(object):
       b = tf.get_variable(initializer=initializer,shape=[dc],name='bias')
       x_concat = tf.reshape( x_concat, [bz,n,d,1])
       conv = tf.nn.conv2d(x_concat, w, strides=[1,1,d,1],padding="SAME")# bz, n, 1, dc
-      R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, 1, dc
 
-      R = tf.reshape(R, [bz, n, dc])
+      R = tf.reshape(conv, [bz, n, dc])
       R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+      R = tf.nn.tanh(tf.nn.bias_add(R,b),name="R") # bz, n, dc
+
+
+      # R = tf.reshape(conv, [bz, n, dc])
+      # R =tf.matmul(
+      #   tf.tile(tf.reshape(alpha,[-1,1, n]),[1,n,1]), # bz, n, n
+      #   R # bz, n, dc
+      # )
+      # R = tf.nn.tanh(tf.nn.bias_add(R,b),name="R") # bz, n, dc
+
+      
+      
+      # R = tf.nn.tanh(tf.nn.bias_add(conv,b),name="R") # bz, n, dc
+      # R = tf.reshape(conv, [bz, n, dc])
+      # R = tf.multiply(R, tf.reshape(alpha, [bz, n, 1])) # bz, n, dc
+      
+
+      
     self.l2_loss += tf.nn.l2_loss(w)
     self.l2_loss += tf.nn.l2_loss(b)
     return R
